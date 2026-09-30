@@ -1,0 +1,58 @@
+{
+  "uid": "firebase_uid_c16cbee3dfcea80b2f0d9a31",
+  "email": "alex.morgan@gmail.com",
+  "displayName": "Alex Morgan",
+  "photoURL": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+  "activeProjectId": "proj_welcome_1790749662891",
+  "projects": [
+    {
+      "id": "proj_welcome_1790749662891",
+      "title": "Alex Morgan Workspace",
+      "pageSize": "A4",
+      "orientation": "portrait",
+      "customWidthMm": null,
+      "customHeightMm": null,
+      "zoom": 0.88,
+      "mode": "preview",
+      "ownerId": "firebase_uid_c16cbee3dfcea80b2f0d9a31",
+      "ownerEmail": "alex.morgan@gmail.com",
+      "ownerName": "Alex Morgan",
+      "assignedAt": "2026-09-30T06:27:42.891Z",
+      "globalStyles": "@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');\n  body { font-family: 'Plus Jakarta Sans', sans-serif; }\n  h1, h2, h3, .font-serif { font-family: 'Cormorant Garamond', serif; }",
+      "pages": [
+        {
+          "id": "page_1790749662891_1",
+          "html": "<div class=\"h-full flex flex-col justify-between p-14 bg-[#faf7f2] text-[#241c15]\">\n  <div>\n    <!-- Masthead -->\n    <div class=\"flex justify-between items-baseline border-b border-[#dcd3c5] pb-5\">\n      <div>\n        <p class=\"text-xs uppercase tracking-[0.25em] font-semibold text-[#a85620]\">Cloud Firestore &bull; User Workspace</p>\n        <h1 class=\"text-3xl font-serif text-[#241c15] mt-1\">Alex Morgan's Foliyo Studio</h1>\n      </div>\n      <span class=\"text-xs font-mono text-[#786755] bg-[#ede7df] px-2.5 py-1 rounded-full border border-[#dcd3c5]\">\n        UID: firebase_uid_c...\n      </span>\n    </div>\n\n    <!-- Welcome Content -->\n    <div class=\"mt-12\">\n      <p class=\"text-xs uppercase tracking-widest text-[#a85620] font-bold mb-2\">Authenticated Session</p>\n      <h2 class=\"text-4xl font-serif text-[#241c15] leading-tight tracking-tight\">\n        Personalized Workspace Loaded from Cloud Firestore\n      </h2>\n      <p class=\"mt-4 text-[#4d3f32] text-sm leading-relaxed max-w-2xl font-light\">\n        Welcome to Foliyo. Your documents, AI review pins, and vector print configurations are isolated to your Firebase UID. All edits automatically synchronize to your private Firestore records.\n      </p>\n    </div>\n\n    <!-- 3 Quick Cards -->\n    <div class=\"grid grid-cols-3 gap-5 mt-10\">\n      <div class=\"p-5 bg-white border border-[#dcd3c5] rounded-lg shadow-sm\">\n        <span class=\"text-xs font-mono font-bold text-[#a85620] block mb-2\">01 / ISOLATION</span>\n        <h3 class=\"font-serif text-lg text-[#241c15] mb-1\">User-Specific Store</h3>\n        <p class=\"text-xs text-[#786755] leading-relaxed\">Secured with Firestore Security Rules restricting reads and writes to request.auth.uid.</p>\n      </div>\n\n      <div class=\"p-5 bg-white border border-[#dcd3c5] rounded-lg shadow-sm\">\n        <span class=\"text-xs font-mono font-bold text-[#8c633a] block mb-2\">02 / VECTOR FIDELITY</span>\n        <h3 class=\"font-serif text-lg text-[#241c15] mb-1\">Print &amp; Slides</h3>\n        <p class=\"text-xs text-[#786755] leading-relaxed\">Create multi-page documents or 16:9 presentations with 100% Chromium PDF precision.</p>\n      </div>\n\n      <div class=\"p-5 bg-white border border-[#dcd3c5] rounded-lg shadow-sm\">\n        <span class=\"text-xs font-mono font-bold text-[#756350] block mb-2\">03 / AI AGENT PINS</span>\n        <h3 class=\"font-serif text-lg text-[#241c15] mb-1\">Sub-pixel Review</h3>\n        <p class=\"text-xs text-[#786755] leading-relaxed\">Highlight text and drop pins for autonomous pair-programming agents via MCP.</p>\n      </div>\n    </div>\n  </div>\n\n  <!-- Footer -->\n  <div class=\"border-t border-[#dcd3c5] pt-4 flex justify-between items-center text-xs text-[#786755]\">\n    <span>Foliyo Studio &bull; Cloud Firestore Backed</span>\n    <span class=\"font-mono text-[#241c15]\">Page 01</span>\n  </div>\n</div>",
+          "css": ""
+        }
+      ],
+      "comments": []
+    },
+    {
+      "id": "proj_1790749663230_pjvq7",
+      "title": "Alex Private Brief 3230",
+      "pageSize": "A4",
+      "orientation": "portrait",
+      "customWidthMm": null,
+      "customHeightMm": null,
+      "zoom": 0.88,
+      "mode": "preview",
+      "globalStyles": "@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');\n  body { font-family: 'Plus Jakarta Sans', sans-serif; }\n  h1, h2, h3, .font-serif { font-family: 'Cormorant Garamond', serif; }",
+      "ownerId": "firebase_uid_c16cbee3dfcea80b2f0d9a31",
+      "ownerEmail": "alex.morgan@gmail.com",
+      "ownerName": "Alex Morgan",
+      "assignedAt": "2026-09-30T06:27:43.230Z",
+      "pages": [
+        {
+          "id": "page-1790749663230",
+          "html": "<div class=\"h-full flex flex-col justify-between p-14 bg-[#faf7f2] text-[#241c15]\">\n  <div>\n    <!-- Editorial Masthead -->\n    <div class=\"flex justify-between items-baseline border-b border-[#dcd3c5] pb-5\">\n      <div>\n        <p class=\"text-xs uppercase tracking-[0.25em] font-semibold text-[#8c633a]\">Volume IV &mdash; Issue 02</p>\n        <h1 class=\"text-3xl font-normal tracking-wide text-[#241c15] mt-1 font-serif\">TERRA &amp; FORM</h1>\n      </div>\n      <div class=\"text-right\">\n        <span class=\"text-xs uppercase tracking-widest text-[#786755] font-medium\">Autumn Edition</span>\n      </div>\n    </div>\n\n    <!-- Editorial Lead Story -->\n    <div class=\"mt-12\">\n      <p class=\"text-xs uppercase tracking-widest text-[#a85620] font-semibold mb-2\">Featured Essay</p>\n      <h2 class=\"text-4xl font-normal text-[#241c15] leading-tight font-serif tracking-tight\">\n        Architecture in Symbiosis: Cultivating Human Spaces in Balance with the Land\n      </h2>\n      <p class=\"mt-5 text-[#4d3f32] leading-relaxed text-[15px] font-normal\">\n        A thoughtful exploration into organic textures, tactile materials, and sustainable structures. How natural pigmentation and natural light craft spaces meant for human dwelling.\n      </p>\n    </div>\n\n    <!-- Palette Study Grid -->\n    <div class=\"grid grid-cols-3 gap-5 mt-10\">\n      <div class=\"p-5 bg-white border border-[#dcd3c5] rounded-lg shadow-sm\">\n        <div class=\"w-full h-12 bg-[#8c633a] rounded-md mb-3\"></div>\n        <h3 class=\"font-serif text-lg text-[#241c15]\">Travertine</h3>\n        <p class=\"text-xs text-[#786755] mt-1 leading-normal\">Warm natural limestone reflecting serene mineral textures.</p>\n      </div>\n\n      <div class=\"p-5 bg-white border border-[#dcd3c5] rounded-lg shadow-sm\">\n        <div class=\"w-full h-12 bg-[#a85620] rounded-md mb-3\"></div>\n        <h3 class=\"font-serif text-lg text-[#241c15]\">Terracotta</h3>\n        <p class=\"text-xs text-[#786755] mt-1 leading-normal\">Warm fired clay and fallen oak leaves radiating hearth warmth.</p>\n      </div>\n\n      <div class=\"p-5 bg-white border border-[#dcd3c5] rounded-lg shadow-sm\">\n        <div class=\"w-full h-12 bg-[#ede7df] rounded-md mb-3 border border-[#dcd3c5]\"></div>\n        <h3 class=\"font-serif text-lg text-[#241c15]\">Sandstone Oat</h3>\n        <p class=\"text-xs text-[#786755] mt-1 leading-normal\">Fine travertine dust and bleached coastal stone tones.</p>\n      </div>\n    </div>\n\n    <!-- Pull Quote Box -->\n    <div class=\"mt-10 p-6 bg-[#ede7df] border border-[#dcd3c5] text-[#241c15] rounded-lg\">\n      <p class=\"font-serif italic text-lg leading-relaxed text-[#4d3f32]\">\n        &ldquo;The purpose of design is not to impose sterile rigidity, but to invite stillness and human reflection into everyday living.&rdquo;\n      </p>\n      <p class=\"text-xs uppercase tracking-widest text-[#a85620] mt-3 font-semibold\">&mdash; Architectural Anthology, 2026</p>\n    </div>\n  </div>\n\n  <!-- Page Footer -->\n  <div class=\"border-t border-[#dcd3c5] pt-4 flex justify-between items-center text-xs text-[#786755]\">\n    <span class=\"tracking-wider uppercase font-medium\">Terra &amp; Form Quarterly</span>\n    <span>Page 01</span>\n  </div>\n</div>",
+          "css": ""
+        }
+      ],
+      "comments": [],
+      "createdAt": "2026-09-30T06:27:43.230Z"
+    }
+  ],
+  "firestorePath": "users/firebase_uid_c16cbee3dfcea80b2f0d9a31",
+  "updatedAt": "2026-09-30T06:27:44.781Z"
+}

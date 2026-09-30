@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Y Master Editor — Precision Vector &amp; Editorial Studio</title>
+  <link rel="icon" type="image/svg+xml" href="assets/y-logo.svg">
+  <link rel="stylesheet" href="styles/app.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <!-- Three-dot menu button -->
+      <div class="project-menu-container">
+        <button id="btn-project-menu" class="btn-control btn-project-dots" title="Projects & Document Menu">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="12" cy="5" r="2.2"/>
+            <circle cx="12" cy="12" r="2.2"/>
+            <circle cx="12" cy="19" r="2.2"/>
+          </svg>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div class="project-menu-dropdown" id="project-menu-dropdown">
+          <div class="dropdown-header">
+            <span class="dropdown-title">Projects</span>
+            <button id="btn-new-project-trigger" class="btn-tool" style="color: var(--color-autumn); font-weight: 600;">
+              + New Project
+            </button>
+          </div>
+          
+          <div class="dropdown-section">
+            <label class="dropdown-label">SAVED PROJECTS</label>
+            <div class="project-items-list" id="project-items-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <div class="dropdown-section update-dropdown-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <label class="dropdown-label" style="margin-bottom: 2px;">SOFTWARE UPDATE</label>
+                <div style="font-size: 11px; color: var(--color-wheat-light); font-weight: 600;">Y Master Editor v2.0 Available</div>
+              </div>
+              <button id="btn-menu-update" class="btn-primary-action" style="width: auto; padding: 4px 10px; font-size: 10.5px;">
+                Update
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <span class="brand-title" id="app-brand-title" style="display: inline-flex; align-items: center; gap: 8px;">
+        <img src="assets/y-logo.svg" alt="Y" class="brand-y-logo" width="24" height="24" style="border-radius: 6px; box-shadow: 0 1px 2px rgba(36, 28, 21, 0.08);" />
+        <span>Y Master Editor</span>
+      </span>
+      <div class="brand-divider"></div>
+      <input type="text" id="doc-title" class="document-title-input" value="Editorial Strategy" title="Document Title">
+    </div>
+
+    <!-- Center Document Canvas Controls -->
+    <div class="toolbar-controls">
+      <!-- Format & Size -->
+      <div class="control-group">
+        <span class="control-label">Size</span>
+        <select id="paper-size-select" class="select-clean">
+          <option value="A4" selected>A4 (210 × 297 mm)</option>
+          <option value="A3">A3 (297 × 420 mm)</option>
+          <option value="A5">A5 (148 × 210 mm)</option>
+          <option value="Letter">Letter (8.5 × 11 in)</option>
+          <option value="Legal">Legal (8.5 × 14 in)</option>
+          <option value="Tabloid">Tabloid (11 × 17 in)</option>
+          <option value="16:9">16:9 Widescreen (Slides)</option>
+          <option value="4:3">4:3 Standard (Slides)</option>
+          <option value="custom">Custom Size...</option>
+        </select>
+      </div>
+
+      <!-- Orientation -->
+      <div class="control-group">
+        <button id="btn-orientation-portrait" class="btn-control active" title="Portrait">Portrait</button>
+        <button id="btn-orientation-landscape" class="btn-control" title="Landscape">Landscape</button>
+      </div>
+
+      <!-- Zoom -->
+      <div class="control-group">
+        <button id="btn-zoom-out" class="btn-control" title="Zoom out">−</button>
+        <span id="zoom-label" style="font-size: 11px; font-weight: 600; min-width: 42px; text-align: center; color: var(--color-sand);">100%</span>
+        <button id="btn-zoom-in" class="btn-control" title="Zoom in">+</button>
+        <button id="btn-zoom-fit" class="btn-control" style="font-size: 11px;" title="Fit">Fit</button>
+      </div>
+
+      <!-- Mode Selector -->
+      <div class="mode-segmented">
+        <button id="btn-mode-preview" class="mode-tab active" title="Preview and Highlight for AI Agent">Preview & Comment</button>
+        <button id="btn-mode-edit" class="mode-tab" title="In-place Manual Editing">Manual Edit</button>
+      </div>
+    </div>
+
+    <!-- Header Right / Quick Add, Update & Google Auth -->
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <!-- App Update Button -->
+      <button id="btn-app-update" class="btn-app-update" title="Update Available — Y Master Editor v2.0">
+        <span class="update-pulse-dot"></span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span class="update-btn-text">Update Y Master Editor</span>
+        <span class="update-badge">v2.0</span>
+      </button>
+
+      <button id="btn-add-page-top" class="btn-control">
+        + Add Page
+      </button>
+
+      <!-- Google Auth Container -->
+      <div class="auth-section" id="auth-section">
+        <!-- Sign in with Google Button (when logged out) -->
+        <button id="btn-google-signin" class="btn-google-signin" title="Sign in with your Google Account">
+          <svg class="google-svg-icon" viewBox="0 0 24 24" width="16" height="16">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>Sign in with Google</span>
+        </button>
+
+        <!-- Logged In User Pill & Menu -->
+        <div class="user-profile-menu-container" id="user-profile-menu-container" style="display: none;">
+          <button id="btn-user-profile" class="btn-user-profile-pill" title="Google Account & Scoped Data">
+            <div class="user-avatar-wrapper">
+              <img id="user-profile-img" class="user-avatar-img" src="" alt="Google User" style="display: none;" />
+              <div id="user-avatar-fallback" class="user-avatar-fallback">G</div>
+            </div>
+            <div class="user-pill-text">
+              <span id="user-pill-name" class="user-pill-name">Alex Morgan</span>
+              <span class="user-pill-badge">
+                <span class="user-pill-dot"></span>
+                <span>Google Synced</span>
+              </span>
+            </div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="user-chevron"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+
+          <!-- User Account Card Dropdown -->
+          <div class="user-profile-dropdown" id="user-profile-dropdown">
+            <div class="profile-card-header">
+              <div class="profile-card-avatar-box">
+                <img id="card-user-img" class="card-user-img" src="" alt="Avatar" style="display: none;" />
+                <div id="card-user-initial" class="card-user-initial">G</div>
+              </div>
+              <div class="profile-card-meta">
+                <div class="profile-card-name" id="card-user-name">Alex Morgan</div>
+                <div class="profile-card-email" id="card-user-email">alex.morgan@gmail.com</div>
+                <div class="profile-card-google-badge">
+                  <svg viewBox="0 0 24 24" width="11" height="11">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                  </svg>
+                  <span>Google Account Verified</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scoped Data Section -->
+            <div class="profile-card-data-section">
+              <div class="data-section-title">
+                <span>FIRESTORE DATA ASSIGNED TO UID</span>
+                <span class="data-live-pill">CLOUD FIRESTORE</span>
+              </div>
+              <div class="data-metrics-grid">
+                <div class="data-metric-box">
+                  <span class="data-metric-val" id="card-stat-projects">1</span>
+                  <span class="data-metric-lbl">Documents</span>
+                </div>
+                <div class="data-metric-box">
+                  <span class="data-metric-val" id="card-stat-pages">3</span>
+                  <span class="data-metric-lbl">Total Pages</span>
+                </div>
+                <div class="data-metric-box">
+                  <span class="data-metric-val" id="card-stat-comments">3</span>
+                  <span class="data-metric-lbl">AI Pins</span>
+                </div>
+              </div>
+              <div class="data-credential-id-box">
+                <span class="cred-lbl">FIREBASE UID:</span>
+                <span class="cred-val" id="card-stat-cred-id">firebase_uid_...</span>
+              </div>
+            </div>
+
+            <!-- Profile Actions -->
+            <div class="profile-card-actions">
+              <button id="btn-open-scoped-data" class="profile-action-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                <span>Inspect Scoped Workspace Data</span>
+              </button>
+              <button id="btn-switch-account" class="profile-action-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7.5" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                <span>Switch Google Account</span>
+              </button>
+              <button id="btn-google-signout" class="profile-action-btn signout">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- Workspace: Canvas on Left/Center, Panel on Right -->
+  <div class="app-workspace">
+    <!-- Left & Center: Document Canvas Viewport -->
+    <main class="canvas-area" id="canvas-viewport">
+      <div class="pages-container" id="pages-container">
+        <!-- Dynamic Document Pages rendered here -->
+      </div>
+    </main>
+
+    <!-- Right Sidebar Panel -->
+    <aside class="sidebar-panel" id="sidebar-panel">
+      <!-- Section 1: Output Actions -->
+      <section class="sidebar-section">
+        <div class="sidebar-heading">Output & Export</div>
+        <div class="actions-stack">
+          <button id="btn-download-pdf" class="btn-primary-action" title="Render 100% Vector PDF with Chromium engine">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download PDF (Max Clarity)
+          </button>
+          <button id="btn-download-pptx" class="btn-secondary-action" title="Export PowerPoint Presentation">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Download Presentation (.pptx)
+          </button>
+          <button id="btn-print" class="btn-secondary-action" title="Send to system printer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Print Document
+          </button>
+        </div>
+      </section>
+
+      <!-- Section 2: Document Pages -->
+      <section class="sidebar-section">
+        <div class="sidebar-heading">
+          <span>Pages</span>
+          <span id="sidebar-page-count" style="font-size: 11px; color: var(--color-wheat); font-weight: 500;">1 Page</span>
+        </div>
+        <div class="page-list-container" id="sidebar-page-list">
+          <!-- Dynamic Page list -->
+        </div>
+        <button id="btn-add-page-sidebar" class="btn-secondary-action" style="padding: 6px 10px; font-size: 12px;">
+          + Add New Page
+        </button>
+      </section>
+
+      <!-- Section 3: AI Agent Comments & Pinpoints -->
+      <section class="sidebar-section">
+        <div class="sidebar-heading">
+          <span>AI Instructions</span>
+          <span id="sidebar-comments-count" style="font-size: 11px; color: var(--color-autumn); font-weight: 600;">0 Pending</span>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
+          Highlight text or click an element on the canvas to leave targeted instructions for the AI agent.
+        </p>
+        <div class="comments-list" id="sidebar-comments-list">
+          <!-- Dynamic comments listed here -->
+        </div>
+      </section>
+
+      <!-- App Update Banner in Sidebar -->
+      <div style="margin-top: auto; padding: 12px; background: rgba(142, 81, 27, 0.12); border: 1px solid rgba(142, 81, 27, 0.32); border-radius: 6px; margin: 12px 16px 0 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--color-autumn); letter-spacing: 0.08em;">UPDATE AVAILABLE</span>
+          <span style="font-size: 9px; font-weight: 700; font-family: monospace; color: var(--color-wheat-light); background: rgba(0,0,0,0.35); padding: 1px 5px; border-radius: 3px;">v2.0.0</span>
+        </div>
+        <p style="font-size: 11px; color: var(--color-wheat); line-height: 1.35; margin-bottom: 8px;">
+          Upgrade previous installation to the complete Y Master Editor redesign &amp; Google Auth.
+        </p>
+        <button id="btn-sidebar-update" class="btn-primary-action" style="padding: 6px 12px; font-size: 11px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Update Y Master Editor v2.0</span>
+        </button>
+      </div>
+
+      <!-- Simple MCP Button in bottom of right panel -->
+      <div style="padding: 14px 16px; border-top: 1px solid var(--border-subtle); margin-top: 8px;">
+        <button id="btn-open-mcp-modal" class="btn-mcp-simple" title="AI Agent connection & MCP configuration">
+          <span class="mcp-dot"></span>
+          <span>MCP Connect</span>
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- MCP Connection Info Modal -->
+  <div class="drawer-backdrop" id="mcp-modal-backdrop"></div>
+  <div class="mcp-info-modal" id="mcp-info-modal">
+    <div class="mcp-modal-header">
+      <div>
+        <span class="mcp-modal-subtitle">Direct Agent Integration</span>
+        <h3 class="mcp-modal-title">AI Agent Connection</h3>
+      </div>
+      <button id="btn-close-mcp-modal" class="btn-modal-close" title="Close">✕</button>
+    </div>
+    <div class="mcp-modal-body">
+      <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.55; margin: 0 0 12px 0;">
+        Connect this editor to your local AI coding agent (e.g. Antigravity or Claude Desktop). When running, the agent can inspect active pages, read your highlighted instructions, and edit content in real time.
+      </p>
+
+      <!-- Status Strip -->
+      <div class="mcp-status-bar">
+        <div class="mcp-status-pill">
+          <span class="mcp-status-dot-active"></span>
+          <span>WebSocket Bridge Active (48721)</span>
+        </div>
+        <span style="font-size: 10px; color: var(--color-sand); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Stdio + WS</span>
+      </div>
+      
+      <!-- Code Snippet Box -->
+      <div class="code-block-wrapper">
+        <div class="code-block-header">
+          <div class="code-block-tab">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            <span>mcp_config.json</span>
+          </div>
+          <button id="btn-copy-mcp-config" class="btn-copy-pill" title="Copy configuration to clipboard">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span>Copy Config</span>
+          </button>
+        </div>
+        <pre id="mcp-config-snippet" class="mcp-code-block"><span class="syn-brace">{</span>
+  <span class="syn-key">"mcpServers"</span><span class="syn-colon">:</span> <span class="syn-brace">{</span>
+    <span class="syn-key">"y-master-editor"</span><span class="syn-colon">:</span> <span class="syn-brace">{</span>
+      <span class="syn-key">"command"</span><span class="syn-colon">:</span> <span class="syn-str">"node"</span><span class="syn-comma">,</span>
+      <span class="syn-key">"args"</span><span class="syn-colon">:</span> <span class="syn-bracket">[</span>
+        <span class="syn-str">"c:/Users/user/Desktop/PDF editor/electron/mcp-server.cjs"</span>
+      <span class="syn-bracket">]</span>
+    <span class="syn-brace">}</span>
+  <span class="syn-brace">}</span>
+<span class="syn-brace">}</span></pre>
+      </div>
+
+      <!-- Agent Capabilities Grid -->
+      <div style="margin-top: 14px;">
+        <span style="font-size: 10px; font-weight: 700; color: var(--color-sand); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 8px;">
+          Available Agent Tools
+        </span>
+        <div class="mcp-tools-grid">
+          <div class="mcp-tool-card">
+            <span class="mcp-tool-name">get_pending_comments</span>
+            <span class="mcp-tool-desc">Read user precision highlights, instructions &amp; CSS targets</span>
+          </div>
+          <div class="mcp-tool-card">
+            <span class="mcp-tool-name">update_element</span>
+            <span class="mcp-tool-desc">Surgically edit elements with Tailwind classes or inner HTML</span>
+          </div>
+          <div class="mcp-tool-card">
+            <span class="mcp-tool-name">set_page_content</span>
+            <span class="mcp-tool-desc">Design full pages with arbitrary HTML, fonts, and layouts</span>
+          </div>
+          <div class="mcp-tool-card">
+            <span class="mcp-tool-name">resolve_comment</span>
+            <span class="mcp-tool-desc">Mark user instructions as completed upon code generation</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Project Modal -->
+  <div class="drawer-backdrop" id="new-project-backdrop"></div>
+  <div class="mcp-info-modal" id="new-project-modal" style="max-width: 480px;">
+    <div class="mcp-modal-header">
+      <div>
+        <span class="mcp-modal-subtitle">Document Workspace</span>
+        <h3 class="mcp-modal-title">Create New Project</h3>
+      </div>
+      <button id="btn-close-new-project-modal" class="btn-modal-close" title="Close">✕</button>
+    </div>
+    <div class="mcp-modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+      <div>
+        <label class="dropdown-label" style="display: block; margin-bottom: 6px;">PROJECT NAME</label>
+        <input type="text" id="modal-project-title" class="modal-input-clean" style="width: 100%; height: 38px;" placeholder="e.g. Q4 Executive Pitch Deck">
+      </div>
+
+      <div>
+        <label class="dropdown-label" style="display: block; margin-bottom: 6px;">DIMENSIONS / PAGE FORMAT</label>
+        <select id="modal-project-size" class="modal-select-clean">
+          <option value="A4" selected>A4 (210 × 297 mm)</option>
+          <option value="A3">A3 (297 × 420 mm)</option>
+          <option value="A5">A5 (148 × 210 mm)</option>
+          <option value="Letter">Letter (8.5 × 11 in)</option>
+          <option value="Legal">Legal (8.5 × 14 in)</option>
+          <option value="Tabloid">Tabloid (11 × 17 in)</option>
+          <option value="16:9">16:9 Widescreen (Slides)</option>
+          <option value="4:3">4:3 Standard (Slides)</option>
+          <option value="custom">Custom Dimensions (Arbitrary Size)...</option>
+        </select>
+      </div>
+
+      <!-- Custom Dimensions Fields -->
+      <div id="modal-custom-dims" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <label class="dropdown-label" style="display: block; margin-bottom: 4px;">WIDTH (MM)</label>
+          <input type="number" id="modal-custom-w" class="modal-input-clean" style="width: 100%; height: 36px;" value="210">
+        </div>
+        <div>
+          <label class="dropdown-label" style="display: block; margin-bottom: 4px;">HEIGHT (MM)</label>
+          <input type="number" id="modal-custom-h" class="modal-input-clean" style="width: 100%; height: 36px;" value="297">
+        </div>
+      </div>
+
+      <div>
+        <label class="dropdown-label" style="display: block; margin-bottom: 6px;">ORIENTATION</label>
+        <div class="segmented-control-group">
+          <button id="modal-orient-portrait" class="segmented-control-btn active" type="button">Portrait</button>
+          <button id="modal-orient-landscape" class="segmented-control-btn" type="button">Landscape</button>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+        <button id="btn-cancel-new-project" class="btn-tool" style="padding: 7px 14px; font-size: 11px;">Cancel</button>
+        <button id="btn-submit-new-project" class="btn-primary-action" style="width: auto; padding: 7px 18px; font-size: 12px;">Create Project</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating WYSIWYG Formatting Bar -->
+  <div class="floating-wysiwyg-bar" id="wysiwyg-bar">
+    <button class="wysiwyg-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+    <button class="wysiwyg-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+    <button class="wysiwyg-btn" data-cmd="underline" title="Underline"><u>U</u></button>
+    <div style="width: 1px; height: 14px; background: var(--border-subtle); margin: 0 2px;"></div>
+    <button class="wysiwyg-btn" data-cmd="formatBlock" data-val="H1" title="Heading 1">H1</button>
+    <button class="wysiwyg-btn" data-cmd="formatBlock" data-val="H2" title="Heading 2">H2</button>
+    <button class="wysiwyg-btn" data-cmd="formatBlock" data-val="P" title="Paragraph">P</button>
+    <div style="width: 1px; height: 14px; background: var(--border-subtle); margin: 0 2px;"></div>
+    <button class="wysiwyg-btn" data-cmd="justifyLeft" title="Align Left">⯇</button>
+    <button class="wysiwyg-btn" data-cmd="justifyCenter" title="Align Center">☰</button>
+    <button class="wysiwyg-btn" data-cmd="justifyRight" title="Align Right">⯈</button>
+  </div>
+
+  <!-- Floating AI Comment Popover -->
+  <div class="comment-popover" id="comment-popover">
+    <div class="popover-header">
+      <span class="popover-title">Targeted AI Instruction</span>
+      <button id="btn-close-popover" class="btn-modal-close" style="width: 22px; height: 22px; font-size: 11px;" title="Close">✕</button>
+    </div>
+    
+    <div>
+      <div id="popover-selector" class="popover-target-preview">section > h2</div>
+      <div id="popover-selected-text" class="popover-quote-preview" style="margin-top: 6px;"></div>
+    </div>
+
+    <div>
+      <textarea id="popover-comment-input" class="popover-textarea" style="width: 100%;" placeholder="Describe the exact change for this element (e.g., Update heading text, switch font to serif, change accent to Autumn rust)..."></textarea>
+    </div>
+
+    <div class="popover-actions">
+      <button id="btn-cancel-comment" class="btn-tool" style="padding: 4px 10px; font-size: 11px;">Cancel</button>
+      <button id="btn-save-comment" class="btn-primary-action" style="padding: 5px 14px; font-size: 11px; width: auto;">
+        Save Instruction
+      </button>
+    </div>
+  </div>
+
+  <!-- Manual Code Drawer -->
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <aside class="code-drawer" id="code-drawer">
+    <div class="drawer-header">
+      <div>
+        <h3 id="drawer-page-title" style="font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; color: var(--color-wheat);">Manual Code</h3>
+        <p style="font-size: 11px; color: var(--text-muted);">Direct HTML & CSS editor</p>
+      </div>
+      <button id="btn-close-drawer" class="btn-tool" style="font-size: 14px;">✕</button>
+    </div>
+
+    <div class="drawer-tabs">
+      <button class="drawer-tab-btn active" data-tab="html">Page HTML</button>
+      <button class="drawer-tab-btn" data-tab="css">Page CSS</button>
+      <button class="drawer-tab-btn" data-tab="global">Global Styles</button>
+    </div>
+
+    <textarea id="drawer-code-editor" class="code-editor-area" spellcheck="false"></textarea>
+
+    <div class="drawer-footer">
+      <span style="font-size: 11px; color: var(--text-dim);">Tailwind CSS &amp; Web Fonts Available</span>
+      <button id="btn-apply-code" class="btn-primary-action" style="width: auto; padding: 6px 16px;">Apply Changes</button>
+    </div>
+  </aside>
+
+  <!-- Google Sign-In Modal -->
+  <div class="drawer-backdrop" id="google-signin-backdrop"></div>
+  <div class="google-signin-modal" id="google-signin-modal">
+    <div class="google-modal-header">
+      <div class="google-modal-brand">
+        <svg class="google-svg-icon-large" viewBox="0 0 24 24" width="24" height="24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <div>
+          <h3 class="google-modal-title">Sign in with Google</h3>
+          <p class="google-modal-subtitle">Continue to Y Master Editor &amp; Claim Workspace</p>
+        </div>
+      </div>
+      <button id="btn-close-google-modal" class="btn-modal-close" title="Close">✕</button>
+    </div>
+
+    <div class="google-modal-body">
+      <div class="google-data-scope-notice">
+        <div class="scope-icon">🔒</div>
+        <p>
+          <strong>Account-Scoped Workspace:</strong> When you sign in, all active documents, presentations, AI highlight instructions, and export states will be assigned directly to your Google credential.
+        </p>
+      </div>
+
+      <!-- Account Options List -->
+      <label class="dropdown-label" style="margin-bottom: 8px; display: block;">AVAILABLE GOOGLE ACCOUNTS</label>
+      <div class="google-accounts-picker" id="google-accounts-picker">
+        <!-- Account 1 -->
+        <div class="google-account-choice active" data-email="alex.morgan@gmail.com" data-name="Alex Morgan" data-id="google_108492049102948291" data-avatar="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="account-choice-avatar" alt="Alex Morgan">
+          <div class="account-choice-meta">
+            <span class="account-choice-name">Alex Morgan</span>
+            <span class="account-choice-email">alex.morgan@gmail.com</span>
+          </div>
+          <span class="account-choice-badge">Primary</span>
+        </div>
+
+        <!-- Account 2 -->
+        <div class="google-account-choice" data-email="dchen.engineering@gmail.com" data-name="David Chen" data-id="google_109283749201948273" data-avatar="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="account-choice-avatar" alt="David Chen">
+          <div class="account-choice-meta">
+            <span class="account-choice-name">David Chen</span>
+            <span class="account-choice-email">dchen.engineering@gmail.com</span>
+          </div>
+          <span class="account-choice-badge">Work</span>
+        </div>
+
+        <!-- Account 3: Custom / New -->
+        <div class="google-account-choice custom-toggle" id="choice-custom-google">
+          <div class="account-choice-avatar-placeholder">+</div>
+          <div class="account-choice-meta">
+            <span class="account-choice-name">Use another Google Account</span>
+            <span class="account-choice-email">Enter custom Google credentials or OAuth ID</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Credentials Form (Expandable) -->
+      <div class="custom-google-form" id="custom-google-form" style="display: none;">
+        <div class="modal-form-group">
+          <label class="dropdown-label">FULL NAME</label>
+          <input type="text" id="custom-google-name" class="modal-input-clean" placeholder="e.g. Jordan Rivera">
+        </div>
+        <div class="modal-form-group">
+          <label class="dropdown-label">GOOGLE EMAIL</label>
+          <input type="email" id="custom-google-email" class="modal-input-clean" placeholder="e.g. jordan.rivera@gmail.com">
+        </div>
+        <div class="modal-form-group">
+          <label class="dropdown-label">GOOGLE CLOUD CLIENT ID (OPTIONAL FOR BROWSER OAUTH 2.0)</label>
+          <input type="text" id="custom-google-client-id" class="modal-input-clean font-mono" placeholder="your-app.apps.googleusercontent.com">
+        </div>
+      </div>
+
+      <!-- Data Assignment Checkbox -->
+      <div class="data-assign-checkbox-row">
+        <label class="checkbox-container">
+          <input type="checkbox" id="chk-assign-existing" checked>
+          <span class="checkmark"></span>
+          <span class="checkbox-label-text">
+            <strong>Assign all current workspace documents to this Google account</strong>
+            <small style="display: block; color: var(--text-dim); margin-top: 2px;">Your current Product Briefing Document &amp; presentations will be linked to this credential.</small>
+          </span>
+        </label>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="google-modal-actions">
+        <button id="btn-cancel-google-modal" class="btn-tool" style="padding: 8px 16px;">Cancel</button>
+        <button id="btn-confirm-google-signin" class="btn-primary-action google-confirm-btn">
+          <svg class="google-svg-icon" viewBox="0 0 24 24" width="14" height="14">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>Confirm &amp; Sign In</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scoped Workspace Data Inspector Modal -->
+  <div class="drawer-backdrop" id="scoped-data-backdrop"></div>
+  <div class="scoped-data-modal" id="scoped-data-modal">
+    <div class="scoped-modal-header">
+      <div>
+        <span class="mcp-modal-subtitle">Credential-Scoped Storage</span>
+        <h3 class="mcp-modal-title">Assigned Google Account Data</h3>
+      </div>
+      <button id="btn-close-scoped-modal" class="btn-modal-close">✕</button>
+    </div>
+    <div class="scoped-modal-body">
+      <div class="scoped-user-banner">
+        <div class="scoped-user-meta">
+          <span class="scoped-label">CURRENT GOOGLE CREDENTIAL:</span>
+          <span class="scoped-name" id="scoped-modal-owner">Alex Morgan (alex.morgan@gmail.com)</span>
+        </div>
+        <span class="scoped-badge">Verified Credential</span>
+      </div>
+
+      <div class="scoped-table-container">
+        <table class="scoped-data-table">
+          <thead>
+            <tr>
+              <th>Document Title</th>
+              <th>Format</th>
+              <th>Pages</th>
+              <th>Ownership Status</th>
+              <th>Assigned At</th>
+            </tr>
+          </thead>
+          <tbody id="scoped-docs-tbody">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="scoped-modal-footer">
+        <button id="btn-export-account-json" class="btn-tool" style="font-weight: 600;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Export Account Data (JSON)</span>
+        </button>
+        <button id="btn-done-scoped-modal" class="btn-primary-action" style="width: auto; padding: 6px 18px;">
+          Done
+        </button>
+      </div>
+    </div>
+  <!-- Application Update Modal -->
+  <div class="drawer-backdrop" id="update-modal-backdrop"></div>
+  <div class="app-update-modal" id="app-update-modal">
+    <div class="mcp-modal-header">
+      <div>
+        <span class="mcp-modal-subtitle">SYSTEM UPGRADE &bull; CHANNEL STABLE</span>
+        <h3 class="mcp-modal-title">Update to Y Master Editor v2.0</h3>
+      </div>
+      <button id="btn-close-update-modal" class="btn-modal-close" title="Close">✕</button>
+    </div>
+
+    <div class="mcp-modal-body">
+      <!-- Version Comparison Strip -->
+      <div class="update-version-strip">
+        <div class="version-step">
+          <span class="version-badge legacy">v1.0.0</span>
+          <span class="version-label">Current Installed Version</span>
+        </div>
+        <div class="version-arrow">➔</div>
+        <div class="version-step">
+          <span class="version-badge foliyo">v2.0.0</span>
+          <span class="version-label">Y Master Editor</span>
+        </div>
+      </div>
+
+      <!-- Verified Update Notice -->
+      <div class="update-verified-notice">
+        <div class="update-check-icon"><img src="assets/y-logo.svg" alt="Y" width="22" height="22" style="border-radius: 5px;" /></div>
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--color-wheat-light);">Complete Studio Redesign &amp; System Upgrade Ready</div>
+          <div style="font-size: 11px; color: var(--color-sand); line-height: 1.45; margin-top: 3px;">
+            This update seamlessly upgrades your installed version with the new Y Master Editor brand, minimalist Y monogram, Light Earth Tone palette, and Firebase Google Auth without losing any documents.
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Highlights -->
+      <div style="margin: 14px 0 12px 0;">
+        <span class="dropdown-label" style="margin-bottom: 8px;">KEY UPDATES INCLUDED IN THIS RELEASE</span>
+        <div class="update-features-grid">
+          <div class="update-feature-card">
+            <span class="feature-bullet">✦</span>
+            <div>
+              <strong>Light Earth Tone Redesign</strong>
+              <p>Sandstone Oat, Soft Linen &amp; Warm Terracotta palette with tactile editorial polish.</p>
+            </div>
+          </div>
+          <div class="update-feature-card">
+            <span class="feature-bullet">✦</span>
+            <div>
+              <strong>Minimalist Y Brand: Y Master Editor</strong>
+              <p>Custom minimalist Y monogram logo symbolizing AI + Human convergence.</p>
+            </div>
+          </div>
+          <div class="update-feature-card">
+            <span class="feature-bullet">✦</span>
+            <div>
+              <strong>Firebase Google Sign-In &amp; Firestore</strong>
+              <p>Assign workspace documents to unique Firebase UIDs with Cloud Firestore isolation.</p>
+            </div>
+          </div>
+          <div class="update-feature-card">
+            <span class="feature-bullet">✦</span>
+            <div>
+              <strong>Product Briefing Executive Document</strong>
+              <p>Built-in editorial document with problem/solution pillars and engineering roadmap.</p>
+            </div>
+          </div>
+          <div class="update-feature-card">
+            <span class="feature-bullet">✦</span>
+            <div>
+              <strong>Sub-Pixel AI Comment Pinning &amp; MCP Sync</strong>
+              <p>Bidirectional WebSocket bridge (port 48721) for live agent pairing and visual review loops.</p>
+            </div>
+          </div>
+          <div class="update-feature-card">
+            <span class="feature-bullet">✦</span>
+            <div>
+              <strong>Chromium Vector Engine &amp; PPTX Compiler</strong>
+              <p>Max clarity PDF output with zero blur and 16:9 widescreen PowerPoint presentation export.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Update Progress Container (Animated during update) -->
+      <div class="update-progress-container" id="update-progress-container" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span id="update-progress-status" style="font-size: 11px; font-weight: 600; color: var(--color-wheat-light);">Applying Y Master Editor v2.0 update...</span>
+          <span id="update-progress-pct" style="font-size: 11px; font-family: monospace; color: var(--color-autumn); font-weight: 700;">0%</span>
+        </div>
+        <div class="update-progress-track">
+          <div class="update-progress-fill" id="update-progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="update-modal-footer">
+        <button id="btn-cancel-update" class="btn-tool" style="padding: 8px 16px; font-size: 11.5px;">Remind Me Later</button>
+        <button id="btn-confirm-app-update" class="btn-primary-action" style="width: auto; padding: 9px 22px; font-size: 12.5px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span id="btn-confirm-update-label">Update to Y Master Editor v2.0 Now</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="services/firebase.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
+

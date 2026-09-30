@@ -1,0 +1,11 @@
+{
+  "activeProjectId": "proj_1",
+  "projects": [
+    {
+      "id": "proj_1",
+      "title": "Test Project"
+    }
+  ],
+  "uid": "firebase_uid_878664154084567ac04ccd57",
+  "updatedAt": "2026-09-30T06:05:21.053Z"
+}
