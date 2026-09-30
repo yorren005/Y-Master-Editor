@@ -75,13 +75,28 @@ function createWindow() {
   });
 }
 
-// Start local WebSocket bridge with EADDRINUSE resilience
+// Prevent any unexpected background network/port error from showing an error dialog popup
+process.on('uncaughtException', (err) => {
+  console.warn('[Handled Main Process Notice]:', err && err.message ? err.message : err);
+});
+
+// Start local WebSocket bridge with full EADDRINUSE resilience
 function startWsBridge(port = DEFAULT_PORT) {
   try {
     const server = http.createServer();
-    wss = new WebSocket.Server({ server });
+    const wsServer = new WebSocket.Server({ server });
+    wss = wsServer;
 
-    wss.on('connection', (ws) => {
+    // Crucial: ws.Server re-emits HTTP server errors; always attach an error listener on wsServer
+    wsServer.on('error', (err) => {
+      if (err && err.code === 'EADDRINUSE') {
+        // Handled by server.on('error') below
+        return;
+      }
+      console.warn('[WS Server Notice]:', err.message);
+    });
+
+    wsServer.on('connection', (ws) => {
       mcpClients.add(ws);
 
       ws.on('message', (message) => {
@@ -112,15 +127,18 @@ function startWsBridge(port = DEFAULT_PORT) {
 
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
-        console.warn(`[WS Bridge] Port ${port} in use, retrying in 2 seconds...`);
-        setTimeout(() => startWsBridge(port), 2000);
+        const nextPort = port < DEFAULT_PORT + 15 ? port + 1 : 0;
+        console.warn(`[WS Bridge] Port ${port} in use, switching to port ${nextPort}...`);
+        try { server.close(); } catch (e) {}
+        setTimeout(() => startWsBridge(nextPort), 300);
       } else {
         console.error('[WS Bridge Server Error]', err);
       }
     });
 
     server.listen(port, '127.0.0.1', () => {
-      console.log(`[WebSocket Bridge] Successfully listening on ws://127.0.0.1:${port}`);
+      const actualPort = server.address() ? server.address().port : port;
+      console.log(`[WebSocket Bridge] Successfully listening on ws://127.0.0.1:${actualPort}`);
     });
   } catch (err) {
     console.error('[WS Bridge Init Error]', err);
