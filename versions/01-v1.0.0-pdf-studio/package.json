@@ -1,0 +1,16 @@
+{
+  "name": "pdf-studio-mcp",
+  "productName": "PDF Studio",
+  "version": "1.0.0",
+  "description": "Vector PDF & Presentation Studio with MCP Agent Integration",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "mcp": "node electron/mcp-server.cjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0",
+    "pptxgenjs": "^4.0.1",
+    "ws": "^8.18.0"
+  }
+}
