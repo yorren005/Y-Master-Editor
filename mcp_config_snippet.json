@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "pdf-canvas-studio": {
+      "command": "node",
+      "args": [
+        "c:/Users/user/Desktop/PDF editor/electron/mcp-server.cjs"
+      ]
+    }
+  }
+}

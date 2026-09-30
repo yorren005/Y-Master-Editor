@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <!-- Minimalist Warm Linen Badge -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#FAF7F2" stroke="#D8CEBE" stroke-width="2"/>
+  <!-- Minimalist Editorial 'Y' Monogram (Only Y) -->
+  <!-- Outer Espresso Y Structure -->
+  <path d="M14 14H26.5L32 25.2L37.5 14H50L36.5 36.5V50H27.5V36.5L14 14Z" fill="#241C15"/>
+  <!-- Inner Terracotta Convergence Channel -->
+  <path d="M21.5 15.5H25.2L32 28.8L38.8 15.5H42.5L33.3 33.8V48.5H30.7V33.8L21.5 15.5Z" fill="#A85620"/>
+</svg>
