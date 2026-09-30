@@ -1,7 +1,7 @@
 {
   "name": "y-master-editor",
   "productName": "Y Master Editor",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Y Master Editor — Precision Vector PDF & Presentation Studio with MCP Agent Integration",
   "main": "electron/main.cjs",
   "scripts": {
@@ -36,6 +36,7 @@
   "build": {
     "appId": "com.ymastereditor.app",
     "productName": "Y Master Editor",
+    "asar": false,
     "copyright": "Copyright © 2026",
     "directories": {
       "output": "dist"
@@ -44,6 +45,8 @@
       "electron/**/*",
       "src/**/*",
       "assets/**/*",
+      "firebase-config.json",
+      "firestore.rules",
       "package.json"
     ],
     "win": {
