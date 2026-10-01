@@ -1,9 +1,9 @@
 {
-  "apiKey": "AIzaSyDummyKeyForFoliyoStudioApp2026",
-  "authDomain": "foliyo-studio.firebaseapp.com",
-  "projectId": "foliyo-studio",
-  "storageBucket": "foliyo-studio.appspot.com",
-  "messagingSenderId": "108492049102",
-  "appId": "1:108492049102:web:a1b2c3d4e5f6",
-  "_instructions": "Replace the values above with your project configuration from Firebase Console > Project Settings > General > Your apps > Web app."
+  "apiKey": "AIzaSyB0Kz1QW7jYm9uKxtDE64U4evEcwlu9lpE",
+  "authDomain": "y-master-editor-app.firebaseapp.com",
+  "projectId": "y-master-editor-app",
+  "storageBucket": "y-master-editor-app.firebasestorage.app",
+  "messagingSenderId": "587803616353",
+  "appId": "1:587803616353:web:f8d4b65bb1c5a1d2c63620",
+  "projectNumber": "587803616353"
 }
