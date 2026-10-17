@@ -3909,10 +3909,35 @@ function bindEvents() {
   const mcpTabTitle = document.getElementById('mcp-config-tab-title');
   const mcpInstruction = document.getElementById('mcp-provider-instruction');
   const mcpTabsNav = document.getElementById('mcp-tabs-nav');
+  const btnCopyGeminiUrl = document.getElementById('btn-copy-gemini-url');
   const btnCopyUrl = document.getElementById('btn-copy-url');
   const btnCopyCmd = document.getElementById('btn-copy-cmd');
 
   const MCP_CONFIGS = {
+    gemini: {
+      title: 'Google Gemini Connected Apps (HTTPS Endpoint)',
+      buttonLabel: 'Copy Gemini HTTPS URL',
+      instruction: 'In <strong>Gemini &gt; Settings &gt; Connected Apps &gt; Add MCP Server</strong>, enter Server Name: <code>Y-Master-Editor</code> and paste the public HTTPS URL below.',
+      snippet: JSON.stringify({
+        name: "Y-Master-Editor",
+        description: "Standard Document Editor & Canvas Operations MCP Server",
+        url: "https://preserve-gilbert-lyrics-simple.trycloudflare.com/mcp",
+        transport: "streamable_http",
+        capabilities: {
+          tools: [
+            "get_document_outline",
+            "get_selection_context",
+            "get_pending_instructions",
+            "authorize_instruction",
+            "propose_component_change",
+            "propose_region_replacement",
+            "update_page_content",
+            "add_page",
+            "rollback_transaction"
+          ]
+        }
+      }, null, 2)
+    },
     claude: {
       title: 'claude_desktop_config.json',
       buttonLabel: 'Copy Claude Config',
@@ -3971,7 +3996,7 @@ function bindEvents() {
     }
   };
 
-  let activeMcpProvider = 'claude';
+  let activeMcpProvider = 'gemini';
 
   const highlightJson = (code) => {
     return code
@@ -4061,6 +4086,12 @@ function bindEvents() {
       if (data) {
         copyToClipboard(data.snippet, btnCopyLabel, data.buttonLabel);
       }
+    });
+  }
+
+  if (btnCopyGeminiUrl) {
+    btnCopyGeminiUrl.addEventListener('click', () => {
+      copyToClipboard('https://preserve-gilbert-lyrics-simple.trycloudflare.com/mcp', btnCopyGeminiUrl, 'Copy HTTPS URL');
     });
   }
 

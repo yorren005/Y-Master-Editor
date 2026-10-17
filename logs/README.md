@@ -16,6 +16,8 @@ This directory contains native markdown log files tracking the CI/CD pipeline, a
    - Initial run diagnostics before workflow hardening.
 5. **[Google Gemini MCP HTTPS Connection & Protocol Verification](./mcp-https-gemini-connection-test.md)**
    - Verification of public Cloudflare HTTPS tunnel, Streamable HTTP SSE handshake, and discovery of all 9 document tools.
+6. **[Google Gemini MCP UI Integration & Test Verification](./mcp-ui-gemini-integration-test.md)**
+   - Verification of frontend modal updates, default Gemini tab, quick-copy HTTPS row, and 100% pass across all 5 test suites.
 
 ---
 

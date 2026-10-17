@@ -95,6 +95,7 @@ async function runTests() {
   console.log(`✓ Future feature registered dynamically: ${FeatureRegistry.listFeatures().join(', ')}`);
 
   console.log('\n🎉 ALL VERIFICATION TESTS PASSED SUCCESSFULLY! 🚀');
+  process.exit(0);
 }
 
 runTests().catch(err => {
