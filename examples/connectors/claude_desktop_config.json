@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "y-master-editor": {
+      "command": "node",
+      "args": [
+        "y:\\github repositories\\Y-Master-Editor\\electron\\mcp-server.cjs"
+      ],
+      "env": {
+        "MCP_API_KEY": "ymaster_mcp_default_token",
+        "MCP_TRANSPORT": "stdio"
+      }
+    }
+  }
+}

@@ -5,3 +5,11 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
+.mcp-port.json
+stderr.txt
+stdout.txt
+test_lock.cjs
+service-account.json
+data/tracking/
+data/firestore/*.json
+!data/firestore/.gitkeep

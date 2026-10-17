@@ -1,10 +1,26 @@
 {
-  "mcpServers": {
-    "y-master-editor": {
-      "command": "node",
-      "args": [
-        "c:/Users/user/Desktop/PDF editor/electron/mcp-server.cjs"
-      ]
+  "_comment": "Y Master Editor — Universal MCP Config. Copy the block for your provider.",
+
+  "stdio (Claude Desktop, Cursor, Windsurf, VS Code, Antigravity)": {
+    "mcpServers": {
+      "y-master-editor": {
+        "command": "node",
+        "args": [
+          "Y:\\github repositories\\Y-Master-Editor\\electron\\mcp-server.cjs"
+        ]
+      }
     }
-  }
+  },
+
+  "http (Any MCP-compatible client)": {
+    "mcpServers": {
+      "y-master-editor": {
+        "url": "http://localhost:48722/mcp"
+      }
+    }
+  },
+
+  "openai_gpt_actions_schema_url": "http://localhost:48722/api/v1/openapi.json",
+  "gemini_function_declarations_url": "http://localhost:48722/api/v1/gemini-tools",
+  "health_check_url": "http://localhost:48722/health"
 }

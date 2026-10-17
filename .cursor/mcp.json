@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "y-master-editor": {
+      "command": "node",
+      "args": [
+        "Y:\\github repositories\\Y-Master-Editor\\electron\\mcp-server.cjs"
+      ]
+    }
+  }
+}

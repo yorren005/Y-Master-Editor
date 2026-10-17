@@ -1,0 +1,51 @@
+name: Desktop CI/CD - Firebase Sync & Electron Release
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  release-desktop:
+    runs-on: windows-latest # Or matrix: [windows-latest, macos-latest, ubuntu-latest]
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Bump Version & Push Tag
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version patch -m "chore(release): v%s [skip ci]"
+          git push origin main --follow-tags
+
+      - name: Deploy Firebase Rules, Indexes & Schema First
+        shell: bash
+        run: |
+          npm install -g firebase-tools
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > service-account.json
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/service-account.json"
+          firebase deploy --only firestore:rules,firestore:indexes,storage --non-interactive
+          rm service-account.json
+
+      - name: Build & Publish Desktop App + latest.yml to GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --publish always
+
+      - name: Broadcast Release to Firebase (Instant Desktop Popup)
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/broadcast-desktop-release.mjs

@@ -8,6 +8,7 @@
     "start": "electron .",
     "serve": "node server.cjs",
     "mcp": "node electron/mcp-server.cjs",
+    "test": "node test/engine-test.cjs && node test/pdf-adapter-test.cjs && node test/e2e-mcp-integration-test.cjs && node test/import-pipeline-test.cjs && node test/omni-auth-telemetry-test.cjs",
     "build:icon": "powershell -ExecutionPolicy Bypass -File scripts/create-icon.ps1",
     "pack": "electron-builder --dir",
     "dist": "electron-builder --win",
@@ -25,19 +26,35 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",
+    "electron-updater": "^6.8.9",
+    "express": "^5.3.0",
     "firebase": "^12.19.0",
+    "konva": "^10.7.1",
+    "pdf-lib": "^1.17.1",
     "pptxgenjs": "^4.0.1",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "zod": "^4.6.6"
   },
   "devDependencies": {
-    "electron": "^33.2.1",
-    "electron-builder": "^26.15.3"
+    "electron": "^33.4.11",
+    "electron-builder": "^26.15.3",
+    "firebase-admin": "^14.5.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yogeshwarren005-boop/Y-Master-Editor.git"
   },
   "build": {
-    "appId": "com.ymastereditor.app",
+    "appId": "com.independent.desktopapp",
     "productName": "Y Master Editor",
-    "asar": false,
-    "copyright": "Copyright © 2026",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "yogeshwarren005-boop",
+        "repo": "Y-Master-Editor",
+        "releaseType": "release"
+      }
+    ],
     "directories": {
       "output": "dist"
     },
@@ -50,34 +67,26 @@
       "package.json"
     ],
     "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
+      "target": "nsis",
+      "verifyUpdateCodeSignature": false,
       "icon": "assets/icon.ico"
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Y Master Editor",
-      "installerIcon": "assets/icon.ico",
-      "uninstallerIcon": "assets/icon.ico",
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "shortcutName": "Y Master Editor"
     },
-    "portable": {
-      "artifactName": "${productName}-Portable-${version}.${ext}"
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
     }
   }
 }

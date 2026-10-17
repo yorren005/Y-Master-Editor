@@ -1,4 +1,4 @@
-// PDF Studio - Core Application Logic
+// Y Master Editor - Core Application Logic
 // Multi-Project, Precision AI Highlight & Comment, Vector PDF & PPTX Presentation
 
 // Standard Dimensions in Millimeters
@@ -732,39 +732,57 @@ const btnModePreview = document.getElementById('btn-mode-preview');
 const btnModeEdit = document.getElementById('btn-mode-edit');
 const btnAddPageTop = document.getElementById('btn-add-page-top');
 
-// DOM Elements: Google Auth & Profile
-const btnGoogleSignin = document.getElementById('btn-google-signin');
+// DOM Elements: Omni-Auth & Nicknames
+const btnOpenAuthModal = document.getElementById('btn-open-auth-modal') || document.getElementById('btn-google-signin');
 const userProfileMenuContainer = document.getElementById('user-profile-menu-container');
 const btnUserProfile = document.getElementById('btn-user-profile');
 const userProfileDropdown = document.getElementById('user-profile-dropdown');
+const userAvatarSvgContainer = document.getElementById('user-avatar-svg-container');
 const userProfileImg = document.getElementById('user-profile-img');
 const userAvatarFallback = document.getElementById('user-avatar-fallback');
 const userPillName = document.getElementById('user-pill-name');
+const userPillSyncStatus = document.getElementById('user-pill-sync-status');
+const cardAvatarSvgBox = document.getElementById('card-avatar-svg-box');
 const cardUserImg = document.getElementById('card-user-img');
 const cardUserInitial = document.getElementById('card-user-initial');
 const cardUserName = document.getElementById('card-user-name');
 const cardUserEmail = document.getElementById('card-user-email');
+const cardProviderBadge = document.getElementById('card-provider-badge');
 const cardStatProjects = document.getElementById('card-stat-projects');
 const cardStatPages = document.getElementById('card-stat-pages');
 const cardStatComments = document.getElementById('card-stat-comments');
 const cardStatCredId = document.getElementById('card-stat-cred-id');
+const cardTelemetryList = document.getElementById('card-telemetry-list');
 const btnOpenScopedData = document.getElementById('btn-open-scoped-data');
 const btnSwitchAccount = document.getElementById('btn-switch-account');
 const btnGoogleSignout = document.getElementById('btn-google-signout');
 
-// DOM Elements: Google Sign-In Modal
-const googleSigninModal = document.getElementById('google-signin-modal');
-const googleSigninBackdrop = document.getElementById('google-signin-backdrop');
-const btnCloseGoogleModal = document.getElementById('btn-close-google-modal');
-const btnCancelGoogleModal = document.getElementById('btn-cancel-google-modal');
-const btnConfirmGoogleSignin = document.getElementById('btn-confirm-google-signin');
-const googleAccountsPicker = document.getElementById('google-accounts-picker');
-const choiceCustomGoogle = document.getElementById('choice-custom-google');
-const customGoogleForm = document.getElementById('custom-google-form');
-const customGoogleName = document.getElementById('custom-google-name');
-const customGoogleEmail = document.getElementById('custom-google-email');
-const customGoogleClientId = document.getElementById('custom-google-client-id');
+// DOM Elements: Omni-Auth Modal
+const authModal = document.getElementById('auth-modal');
+const authModalBackdrop = document.getElementById('auth-modal-backdrop') || document.getElementById('google-signin-backdrop');
+const btnCloseAuthModal = document.getElementById('btn-close-auth-modal');
+const tabBtnSignin = document.getElementById('tab-btn-signin');
+const tabBtnSignup = document.getElementById('tab-btn-signup');
+const authTabContentSignin = document.getElementById('auth-tab-content-signin');
+const authTabContentSignup = document.getElementById('auth-tab-content-signup');
+const signupAvatarStage = document.getElementById('signup-avatar-stage');
+const btnShuffleNickname = document.getElementById('btn-shuffle-nickname');
+const authSignupNickname = document.getElementById('auth-signup-nickname');
+const signupNicknameFeedback = document.getElementById('signup-nickname-feedback');
+const authSignupEmail = document.getElementById('auth-signup-email');
+const authSignupPassword = document.getElementById('auth-signup-password');
+const authSignupConfirm = document.getElementById('auth-signup-confirm');
+const btnDoSignup = document.getElementById('btn-do-signup');
+const authSigninInput = document.getElementById('auth-signin-input');
+const authSigninPassword = document.getElementById('auth-signin-password');
+const btnDoSignin = document.getElementById('btn-do-signin');
+const btnAuthGuest = document.getElementById('btn-auth-guest');
+const authErrorBanner = document.getElementById('auth-error-banner');
 const chkAssignExisting = document.getElementById('chk-assign-existing');
+const btnSocialGoogle = document.getElementById('btn-social-google');
+const btnSocialFacebook = document.getElementById('btn-social-facebook');
+const btnSocialGithub = document.getElementById('btn-social-github');
+const btnSocialApple = document.getElementById('btn-social-apple');
 
 // DOM Elements: Scoped Workspace Data Modal
 const scopedDataModal = document.getElementById('scoped-data-modal');
@@ -796,6 +814,33 @@ const btnDownloadPdf = document.getElementById('btn-download-pdf');
 const btnDownloadPptx = document.getElementById('btn-download-pptx');
 const btnPrint = document.getElementById('btn-print');
 
+// DOM Elements: Import & Ingestion Controls
+const btnImportPdf = document.getElementById('btn-import-pdf');
+const btnImportWorkspace = document.getElementById('btn-import-workspace');
+const btnImportImage = document.getElementById('btn-import-image');
+const fileInputPdf = document.getElementById('file-input-pdf');
+const fileInputWorkspace = document.getElementById('file-input-workspace');
+const fileInputImage = document.getElementById('file-input-image');
+const canvasDropzoneOverlay = document.getElementById('canvas-dropzone-overlay');
+
+// DOM Elements: Multi-mode Selection Tools & Batch Authorization
+const btnSelObject = document.getElementById('btn-sel-object');
+const btnSelRect = document.getElementById('btn-sel-rect');
+const btnSelLasso = document.getElementById('btn-sel-lasso');
+const btnImplementAllComments = document.getElementById('btn-implement-all-comments');
+let selectionEngine = null;
+
+function setSelectionMode(mode) {
+  if (selectionEngine) {
+    selectionEngine.setMode(mode);
+  }
+  [btnSelObject, btnSelRect, btnSelLasso].forEach(btn => {
+    if (btn) btn.classList.remove('active');
+  });
+  if (mode === 'object' && btnSelObject) btnSelObject.classList.add('active');
+  if (mode === 'rectangle' && btnSelRect) btnSelRect.classList.add('active');
+  if ((mode === 'oval' || mode === 'circle' || mode === 'lasso') && btnSelLasso) btnSelLasso.classList.add('active');
+}
 
 // DOM Elements: Popover
 const commentPopover = document.getElementById('comment-popover');
@@ -877,45 +922,60 @@ function sanitizeProjectColors(projectsList) {
   });
 }
 
-// Google / Firebase Auth Functions
+// Y Master Editor — Omni-Auth, Nicknames & Firebase Storage Functions
+function renderActiveTelemetry(uid) {
+  if (!cardTelemetryList || !uid) return;
+  if (window.FoliyoFirebase && window.FoliyoFirebase.getActivityLogs) {
+    window.FoliyoFirebase.getActivityLogs(uid, 6).then(logs => {
+      if (!logs || logs.length === 0) {
+        cardTelemetryList.innerHTML = `
+          <div class="activity-event-row">
+            <span class="activity-event-name"><span class="activity-event-dot"></span>Session Active</span>
+            <span class="activity-event-time">Now</span>
+          </div>`;
+        return;
+      }
+      cardTelemetryList.innerHTML = logs.map(ev => {
+        const timeStr = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent';
+        const actionLabel = (ev.eventType || ev.action || 'Activity').replace('AUTH_', '').replace('_', ' ');
+        return `
+          <div class="activity-event-row">
+            <span class="activity-event-name"><span class="activity-event-dot"></span>${actionLabel}</span>
+            <span class="activity-event-time">${timeStr}</span>
+          </div>`;
+      }).join('');
+    }).catch(() => {});
+  }
+}
+
 function updateAuthUi() {
   if (currentUser && currentUser.signedIn) {
-    const uid = currentUser.uid || currentUser.id || 'firebase_user';
-    if (btnGoogleSignin) btnGoogleSignin.style.display = 'none';
+    const uid = currentUser.uid || currentUser.id || 'ymaster_user';
+    const nick = currentUser.nickname || currentUser.name || 'Creator';
+    
+    if (btnOpenAuthModal) btnOpenAuthModal.style.display = 'none';
     if (userProfileMenuContainer) userProfileMenuContainer.style.display = 'block';
 
-    if (currentUser.avatar) {
-      if (userProfileImg) {
-        userProfileImg.src = currentUser.avatar;
-        userProfileImg.style.display = 'block';
+    // 1. Render lively animated SVG avatar
+    if (window.YAvatarEngine) {
+      if (userAvatarSvgContainer) {
+        window.YAvatarEngine.renderAvatar(userAvatarSvgContainer, nick, { size: 28, animated: true, idPrefix: 'pill_' });
       }
-      if (userAvatarFallback) userAvatarFallback.style.display = 'none';
-      if (cardUserImg) {
-        cardUserImg.src = currentUser.avatar;
-        cardUserImg.style.display = 'block';
-      }
-      if (cardUserInitial) cardUserInitial.style.display = 'none';
-    } else {
-      const initial = (currentUser.name || 'G').charAt(0).toUpperCase();
-      if (userProfileImg) userProfileImg.style.display = 'none';
-      if (userAvatarFallback) {
-        userAvatarFallback.style.display = 'flex';
-        userAvatarFallback.textContent = initial;
-      }
-      if (cardUserImg) cardUserImg.style.display = 'none';
-      if (cardUserInitial) {
-        cardUserInitial.style.display = 'flex';
-        cardUserInitial.textContent = initial;
+      if (cardAvatarSvgBox) {
+        window.YAvatarEngine.renderAvatar(cardAvatarSvgBox, nick, { size: 44, animated: true, idPrefix: 'card_' });
       }
     }
 
-    const firstName = (currentUser.name || 'Google User').split(' ')[0];
-    if (userPillName) userPillName.textContent = firstName;
-    if (cardUserName) cardUserName.textContent = currentUser.name || 'Google User';
-    if (cardUserEmail) cardUserEmail.textContent = currentUser.email || '';
+    if (userPillName) userPillName.textContent = `@${nick}`;
+    if (cardUserName) cardUserName.textContent = `@${nick}`;
+    if (cardUserEmail) cardUserEmail.textContent = currentUser.email || `${nick.toLowerCase()}@ymaster.internal`;
+    if (cardProviderBadge) {
+      const prov = (currentUser.authProvider || 'Firebase').toUpperCase();
+      cardProviderBadge.textContent = `${prov} VERIFIED`;
+    }
 
     // Calculate scoped metrics
-    const ownedProjects = projects.filter(p => !p.ownerId || p.ownerId === uid || p.ownerId === currentUser.id || p.ownerEmail === currentUser.email);
+    const ownedProjects = projects.filter(p => !p.ownerId || p.ownerId === uid || p.ownerId === currentUser.id || p.ownerEmail === currentUser.email || p.ownerNickname === nick);
     const totalPages = ownedProjects.reduce((acc, p) => acc + (p.pages ? p.pages.length : 1), 0);
     const totalComments = ownedProjects.reduce((acc, p) => acc + (p.comments ? p.comments.length : 0), 0);
 
@@ -927,60 +987,41 @@ function updateAuthUi() {
       cardStatCredId.title = `Firebase UID: ${uid}`;
     }
     if (scopedModalOwner) {
-      scopedModalOwner.textContent = `${currentUser.name} (${currentUser.email}) — UID: ${uid.slice(0, 18)}...`;
+      scopedModalOwner.textContent = `@${nick} (${currentUser.email}) — UID: ${uid.slice(0, 18)}...`;
     }
+
+    // Refresh telemetry list
+    renderActiveTelemetry(uid);
   } else {
-    if (btnGoogleSignin) btnGoogleSignin.style.display = 'inline-flex';
+    if (btnOpenAuthModal) btnOpenAuthModal.style.display = 'inline-flex';
     if (userProfileMenuContainer) userProfileMenuContainer.style.display = 'none';
     if (userProfileDropdown) userProfileDropdown.classList.remove('active');
   }
 }
 
-async function loginWithGoogle(accountData, assignExisting = false) {
-  if (!accountData || !accountData.email) return;
+async function completeLoginSession(userProfile, assignExisting = false) {
+  if (!userProfile) return;
 
-  // 1. Authenticate via Firebase Service to obtain unique Firebase UID
-  let fbUser = null;
-  if (window.FoliyoFirebase) {
-    try {
-      const res = await window.FoliyoFirebase.signInWithGoogle(accountData);
-      if (res && res.user) {
-        fbUser = res.user;
-      }
-    } catch (err) {
-      console.warn('[Firebase Auth Notice]:', err.message);
-    }
-  }
-
-  const email = (accountData.email || (fbUser && fbUser.email) || '').trim();
-  const name = (accountData.name || (fbUser && fbUser.displayName) || email.split('@')[0] || 'Google User').trim();
-  const uid = (fbUser && fbUser.uid) || accountData.uid || `firebase_uid_${btoa(email.toLowerCase()).replace(/[^a-zA-Z0-9]/g, '').slice(0, 20)}`;
-  const avatar = (fbUser && fbUser.photoURL) || accountData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4285F4&color=fff`;
+  const uid = userProfile.uid || userProfile.id;
+  const nick = userProfile.nickname || (userProfile.displayName ? userProfile.displayName.replace(/\s+/g, '') : 'Creator');
 
   currentUser = {
     uid: uid,
     id: uid,
-    email: email,
-    name: name,
-    displayName: name,
-    avatar: avatar,
-    photoURL: avatar,
+    nickname: nick,
+    name: userProfile.displayName || `@${nick}`,
+    displayName: userProfile.displayName || `@${nick}`,
+    email: userProfile.email || `${nick.toLowerCase()}@ymaster.internal`,
+    photoURL: userProfile.photoURL,
+    avatarSvg: userProfile.avatarSvg,
+    authProvider: userProfile.authProvider || 'password',
     signedIn: true,
-    provider: 'google.com',
     authenticatedAt: new Date().toISOString()
   };
 
-  // Requirement 8: Do not store sensitive authentication data manually (only non-sensitive session metadata)
-  localStorage.setItem(STORAGE_CURRENT_USER_KEY, JSON.stringify({
-    uid: currentUser.uid,
-    id: currentUser.uid,
-    email: currentUser.email,
-    name: currentUser.name,
-    avatar: currentUser.avatar,
-    signedIn: true
-  }));
+  localStorage.setItem(STORAGE_CURRENT_USER_KEY, JSON.stringify(currentUser));
 
-  // 2. Requirement 4: When a user logs in, load only their data from Cloud Firestore under their UID
+  // Load user data from Cloud Firestore
   let firestoreRecord = null;
   if (window.FoliyoFirebase) {
     try {
@@ -991,21 +1032,20 @@ async function loginWithGoogle(accountData, assignExisting = false) {
   }
 
   if (firestoreRecord && Array.isArray(firestoreRecord.projects) && firestoreRecord.projects.length > 0) {
-    // Existing user: Load ONLY their Firestore records
     projects = firestoreRecord.projects;
     sanitizeProjectColors(projects);
     const activeId = firestoreRecord.activeProjectId;
     state = projects.find(p => p.id === activeId) || projects[0];
   } else if (assignExisting && projects && projects.length > 0) {
-    // First-time user who explicitly opted to claim current guest workspace
     projects.forEach(p => {
       p.ownerId = currentUser.uid;
+      p.ownerNickname = currentUser.nickname;
       p.ownerEmail = currentUser.email;
       p.ownerName = currentUser.name;
       p.assignedAt = new Date().toISOString();
       if (p.comments) {
         p.comments.forEach(c => {
-          c.author = c.author || currentUser.name;
+          c.author = c.author || `@${currentUser.nickname}`;
           c.authorEmail = c.authorEmail || currentUser.email;
           c.authorId = c.authorId || currentUser.uid;
         });
@@ -1014,7 +1054,6 @@ async function loginWithGoogle(accountData, assignExisting = false) {
     sanitizeProjectColors(projects);
     state = projects[0];
   } else {
-    // Requirement 6: New users automatically get their own empty/default data structure
     const defaultData = window.FoliyoFirebase
       ? window.FoliyoFirebase.createDefaultUserData(currentUser)
       : null;
@@ -1022,23 +1061,9 @@ async function loginWithGoogle(accountData, assignExisting = false) {
     if (defaultData && Array.isArray(defaultData.projects) && defaultData.projects.length > 0) {
       projects = defaultData.projects;
       state = projects[0];
-    } else {
-      const welcomeProj = createProjectModel({
-        id: `proj_user_${Date.now()}`,
-        title: `${currentUser.name}'s Workspace`,
-        pageSize: 'A4',
-        orientation: 'portrait',
-        initialHtml: DEFAULT_PDF_HTML
-      });
-      welcomeProj.ownerId = currentUser.uid;
-      welcomeProj.ownerEmail = currentUser.email;
-      welcomeProj.ownerName = currentUser.name;
-      projects = [welcomeProj];
-      state = welcomeProj;
     }
   }
 
-  // Save initial or claimed state to user's Firestore record
   saveProjects();
   syncUiWithState();
   updateAuthUi();
@@ -1047,7 +1072,95 @@ async function loginWithGoogle(accountData, assignExisting = false) {
   updateSidebar();
   broadcastStateToMcp();
 
-  console.log(`[Firebase Auth & Firestore] Signed in as ${currentUser.name} (${currentUser.email}) — UID: ${currentUser.uid}`);
+  console.log(`[Firebase Auth & Firestore] Signed in as @${currentUser.nickname} — UID: ${currentUser.uid}`);
+}
+
+async function loginWithNicknameCredentials(nicknameOrEmail, password) {
+  if (!window.FoliyoFirebase) return { success: false, error: 'Firebase service not ready' };
+  const res = await window.FoliyoFirebase.signInWithNickname({ nicknameOrEmail, password });
+  if (res && res.success && res.user) {
+    const assignExisting = chkAssignExisting ? chkAssignExisting.checked : false;
+    await completeLoginSession(res.user, assignExisting);
+    return { success: true };
+  }
+  return { success: false, error: (res && res.error) || 'Failed to sign in' };
+}
+
+async function signUpWithNicknameAccount(nickname, password, email) {
+  if (!window.FoliyoFirebase) return { success: false, error: 'Firebase service not ready' };
+  
+  // Generate deterministic SVG & data URL
+  let avatarSvg = null;
+  let avatarDataUrl = null;
+  if (window.YAvatarEngine) {
+    avatarSvg = window.YAvatarEngine.generateSvg(nickname);
+    avatarDataUrl = window.YAvatarEngine.generateDataUrl(nickname);
+  }
+
+  const res = await window.FoliyoFirebase.signUpWithNickname({
+    nickname,
+    password,
+    email,
+    avatarSvg,
+    avatarDataUrl
+  });
+
+  if (res && res.success && res.user) {
+    const assignExisting = chkAssignExisting ? chkAssignExisting.checked : false;
+    await completeLoginSession(res.user, assignExisting);
+    return { success: true };
+  }
+  return { success: false, error: (res && res.error) || 'Failed to register account' };
+}
+
+async function loginWithSocialProvider(provider) {
+  if (!window.FoliyoFirebase) return { success: false, error: 'Firebase service not ready' };
+  const res = await window.FoliyoFirebase.signInWithSocial(provider);
+  if (res && res.success && res.user) {
+    const assignExisting = chkAssignExisting ? chkAssignExisting.checked : false;
+    await completeLoginSession(res.user, assignExisting);
+    return { success: true };
+  }
+  return { success: false, error: (res && res.error) || 'Social authentication canceled' };
+}
+
+function openAuthModal(activeTab = 'signup') {
+  if (!authModal) return;
+  if (authErrorBanner) authErrorBanner.style.display = 'none';
+
+  if (activeTab === 'signup') {
+    if (tabBtnSignup) tabBtnSignup.classList.add('active');
+    if (tabBtnSignin) tabBtnSignin.classList.remove('active');
+    if (authTabContentSignup) authTabContentSignup.style.display = 'block';
+    if (authTabContentSignin) authTabContentSignin.style.display = 'none';
+
+    // Generate initial fun nickname & avatar if empty
+    if (authSignupNickname && !authSignupNickname.value.trim() && window.YAvatarEngine) {
+      const funNick = window.YAvatarEngine.generateFunNickname();
+      authSignupNickname.value = funNick;
+      window.YAvatarEngine.renderAvatar(signupAvatarStage, funNick, { size: 90, animated: true });
+    }
+  } else {
+    if (tabBtnSignin) tabBtnSignin.classList.add('active');
+    if (tabBtnSignup) tabBtnSignup.classList.remove('active');
+    if (authTabContentSignin) authTabContentSignin.style.display = 'block';
+    if (authTabContentSignup) authTabContentSignup.style.display = 'none';
+  }
+
+  authModal.classList.add('active');
+  if (authModalBackdrop) authModalBackdrop.classList.add('active');
+}
+
+function closeAuthModal() {
+  if (authModal) authModal.classList.remove('active');
+  if (authModalBackdrop) authModalBackdrop.classList.remove('active');
+  if (authErrorBanner) authErrorBanner.style.display = 'none';
+}
+
+function showAuthError(msg) {
+  if (!authErrorBanner) return;
+  authErrorBanner.textContent = msg;
+  authErrorBanner.style.display = 'block';
 }
 
 async function logoutGoogle() {
@@ -1065,7 +1178,7 @@ async function logoutGoogle() {
   currentUser = null;
   localStorage.removeItem(STORAGE_CURRENT_USER_KEY);
   if (window.electronAPI && window.electronAPI.saveUserData) {
-    window.electronAPI.saveUserData('currentUser', null);
+    window.electronAPI.saveUserData({ currentUser: null });
   }
 
   // Switch back to guest mode and load only guest data
@@ -1133,7 +1246,7 @@ function exportScopedDataJson() {
   const a = document.createElement('a');
   a.href = url;
   const safeName = currentUser ? currentUser.name.toLowerCase().replace(/\s+/g, '_') : 'guest';
-  a.download = `foliyo_${safeName}_firestore_data.json`;
+  a.download = `y_master_editor_${safeName}_firestore_data.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -1460,7 +1573,8 @@ function switchProject(projectId) {
   if (!target) return;
 
   state = target;
-  localStorage.setItem(STORAGE_ACTIVE_KEY, state.id);
+  const activeKey = currentUser ? getUserActiveKey() : STORAGE_ACTIVE_KEY;
+  localStorage.setItem(activeKey, state.id);
   syncUiWithState();
   renderAllPages();
   updateSidebar();
@@ -1560,7 +1674,7 @@ function syncUiWithState() {
   btnModeEdit.classList.toggle('active', state.mode === 'edit');
 
   const isWidescreen = state.pageSize === '16:9' || state.pageSize === '4:3';
-  appBrandTitle.innerHTML = '<span class="brand-glyph">✦</span> Foliyo';
+  appBrandTitle.innerHTML = '<img src="assets/y-logo.svg" alt="Y" style="height: 18px; vertical-align: middle; margin-right: 4px;"> Y Master Editor';
 
   // Dynamic button labels based on size format
   if (isWidescreen) {
@@ -1630,9 +1744,10 @@ function buildPageIframeHtml(page, pageIndex) {
     }
 
     .highlight-hover {
-      outline: 1.5px dashed #8e511b !important;
+      outline: 2px solid #a85620 !important;
       outline-offset: 2px !important;
-      cursor: pointer;
+      background-color: rgba(168, 86, 32, 0.08) !important;
+      cursor: pointer !important;
     }
 
     [contenteditable="true"] {
@@ -1697,6 +1812,15 @@ function buildPageIframeHtml(page, pageIndex) {
 
       const selector = computeSelector(target);
 
+      const rect = target.getBoundingClientRect();
+      const pageW = ${widthPx} || 1;
+      const pageH = ${heightPx} || 1;
+
+      const normX = Math.max(0, Math.min(1, +(rect.left / pageW).toFixed(4)));
+      const normY = Math.max(0, Math.min(1, +(rect.top / pageH).toFixed(4)));
+      const normW = Math.max(0.001, Math.min(1 - normX, +(rect.width / pageW).toFixed(4)));
+      const normH = Math.max(0.001, Math.min(1 - normY, +(rect.height / pageH).toFixed(4)));
+
       window.parent.postMessage({
         type: 'ELEMENT_CLICKED',
         pageIndex: pageIndex,
@@ -1704,7 +1828,13 @@ function buildPageIframeHtml(page, pageIndex) {
         selectedText: hasTextSelection ? selection.toString().trim() : target.innerText.slice(0, 100),
         elementHtml: target.outerHTML,
         clientX: e.clientX,
-        clientY: e.clientY
+        clientY: e.clientY,
+        bounds: {
+          x: normX,
+          y: normY,
+          width: normW,
+          height: normH
+        }
       }, '*');
     });
 
@@ -1821,6 +1951,18 @@ function renderAllPages() {
     frameBox.appendChild(iframe);
     frameBox.appendChild(pinsLayer);
 
+    // Attach Selection Overlay Engine Canvas
+    if (!selectionEngine && typeof SelectionOverlayEngine !== 'undefined') {
+      selectionEngine = new SelectionOverlayEngine({
+        onSelectionComplete: handleOverlaySelectionComplete,
+        onSelectionClear: handleOverlaySelectionClear
+      });
+      selectionEngine.setZoom(state.zoom);
+    }
+    if (selectionEngine) {
+      selectionEngine.attachToPage(frameBox, index, () => getPagePixelDimensions());
+    }
+
     pageWrapper.appendChild(pageHeader);
     pageWrapper.appendChild(frameBox);
     pagesContainer.appendChild(pageWrapper);
@@ -1880,6 +2022,7 @@ function updateAllPins() {
 function applyZoom() {
   pagesContainer.style.transform = `scale(${state.zoom})`;
   zoomLabel.textContent = `${Math.round(state.zoom * 100)}%`;
+  if (selectionEngine) selectionEngine.setZoom(state.zoom);
 }
 
 function zoomIn() {
@@ -1928,33 +2071,63 @@ function updateSidebar() {
 
   // Comments Count
   const pending = state.comments.filter(c => !c.resolved);
-  sidebarCommentsCount.textContent = `${pending.length} Pending`;
+  const authorized = state.comments.filter(c => c.authorized && !c.resolved);
+  sidebarCommentsCount.textContent = `${authorized.length} Authorized / ${pending.length} Pending`;
 
   // Comments List
   sidebarCommentsList.innerHTML = '';
   if (state.comments.length === 0) {
     sidebarCommentsList.innerHTML = `
       <div style="font-size: 11px; color: var(--text-dim); font-style: italic; padding: 4px 0;">
-        No instructions pinned yet.
+        No instructions pinned yet. Select an element, draw a rectangle, or circle/oval an area to pin targeted instructions.
       </div>
     `;
   } else {
     state.comments.forEach((c, idx) => {
       const card = document.createElement('div');
-      card.className = `comment-card ${c.resolved ? 'resolved' : ''}`;
+      const isAuth = !!c.authorized;
+      const isRes = !!c.resolved;
+      card.className = `comment-card ${isRes ? 'resolved' : ''} ${isAuth && !isRes ? 'authorized' : ''}`;
+
+      const selType = (c.selectionType || 'object').toUpperCase();
+      const geomText = c.bounds
+        ? `${selType} ${Math.round((c.bounds.width || 0) * 100)}%×${Math.round((c.bounds.height || 0) * 100)}%`
+        : selType;
+
+      const statusPillHtml = isRes
+        ? `<span class="status-pill resolved">✓ Done</span>`
+        : (isAuth
+          ? `<span class="status-pill authorized">⚡ Authorized</span>`
+          : `<span class="status-pill pending">Pending Approval</span>`);
+
       card.innerHTML = `
         <div class="comment-card-header">
           <span class="comment-card-tag">#${idx + 1} &bull; ${isWidescreen ? 'Slide' : 'Page'} ${c.pageIndex + 1}</span>
-          <button class="btn-resolve" data-comment-id="${c.id}">
-            ${c.resolved ? '✓ Resolved' : 'Mark Done'}
-          </button>
+          ${statusPillHtml}
         </div>
-        <p class="comment-card-text">"${c.userComment}"</p>
+        <p class="comment-card-text">"${(c.userComment || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}"</p>
         <div class="comment-card-footer">
-          <span class="comment-selector-badge" title="${c.selector}">${c.selector}</span>
-          <button class="btn-tool" data-scroll-comment="${c.pageIndex}" style="font-size: 10px;">Go to</button>
+          <span class="geom-tag" title="${c.selector || 'Region'}">${geomText}</span>
+          <div style="display: flex; gap: 4px; align-items: center;">
+            ${!isRes ? `
+              <button class="btn-authorize ${isAuth ? 'authorized' : ''}" data-comment-id="${c.id}" title="${isAuth ? 'Revoke AI authorization' : 'Authorize AI agent to implement this change'}">
+                ${isAuth ? '✓ Authorized' : '⚡ Authorize'}
+              </button>
+            ` : ''}
+            <button class="btn-resolve" data-comment-id="${c.id}">
+              ${isRes ? 'Reopen' : 'Done'}
+            </button>
+            <button class="btn-tool" data-scroll-comment="${c.pageIndex}" style="font-size: 10px;">Go</button>
+          </div>
         </div>
       `;
+
+      card.addEventListener('mouseenter', () => {
+        if (selectionEngine && c.bounds) {
+          selectionEngine.highlightBounds(c.pageIndex, c.bounds, c.selectionType || 'object');
+        }
+      });
+
       sidebarCommentsList.appendChild(card);
     });
   }
@@ -2033,7 +2206,21 @@ function bindWysiwygEvents() {
 function handleElementClicked(data) {
   if (state.mode === 'edit') return;
 
+  const { widthPx, heightPx } = getPagePixelDimensions();
+
   activeCommentTarget = data;
+  activeCommentTarget.selectionType = 'object';
+  activeCommentTarget.bounds = data.bounds || {
+    x: Math.max(0, Math.min(1, +(data.clientX / widthPx).toFixed(4))),
+    y: Math.max(0, Math.min(1, +(data.clientY / heightPx).toFixed(4))),
+    width: 0.1,
+    height: 0.05
+  };
+
+  if (selectionEngine && activeCommentTarget.bounds) {
+    selectionEngine.highlightBounds(data.pageIndex, activeCommentTarget.bounds, 'object');
+  }
+
   popoverSelector.textContent = data.selector;
   popoverSelectedText.textContent = data.selectedText ? `"${data.selectedText}"` : '';
   popoverCommentInput.value = '';
@@ -2041,20 +2228,74 @@ function handleElementClicked(data) {
   const iframeEl = document.getElementById(`iframe-page-${data.pageIndex}`);
   if (iframeEl) {
     const iframeRect = iframeEl.getBoundingClientRect();
-    const pinX = data.clientX;
-    const pinY = data.clientY;
+    const b = activeCommentTarget.bounds;
+
+    const pinX = data.clientX != null ? data.clientX : Math.round(b.x * widthPx);
+    const pinY = data.clientY != null ? data.clientY : Math.round(b.y * heightPx);
 
     activeCommentTarget.pinX = pinX;
     activeCommentTarget.pinY = pinY;
 
-    const screenX = Math.min(window.innerWidth - 330, Math.max(20, iframeRect.left + pinX));
-    const screenY = Math.min(window.innerHeight - 260, Math.max(65, iframeRect.top + pinY + 16));
+    // Convert bounds to screen space respecting canvas zoom
+    // getBoundingClientRect() already includes CSS transform (zoom), no need to multiply again
+    const elemLeftScreen = iframeRect.left + (b.x * iframeRect.width);
+    const elemTopScreen = iframeRect.top + (b.y * iframeRect.height);
+    const elemHeightScreen = (b.height * iframeRect.height);
+
+    const screenX = Math.min(window.innerWidth - 330, Math.max(20, elemLeftScreen));
+    const screenY = Math.min(window.innerHeight - 260, Math.max(65, elemTopScreen + elemHeightScreen + 10));
 
     commentPopover.style.left = `${screenX}px`;
     commentPopover.style.top = `${screenY}px`;
     commentPopover.classList.add('active');
     popoverCommentInput.focus();
   }
+}
+
+function handleOverlaySelectionComplete(selection) {
+  const pageIndex = selection.pageIndex;
+  const iframeEl = document.getElementById(`iframe-page-${pageIndex}`);
+  if (!iframeEl) return;
+  const iframeRect = iframeEl.getBoundingClientRect();
+
+  const isOval = selection.type === 'oval' || selection.type === 'circle' || selection.type === 'lasso';
+  const typeTag = isOval ? 'OVAL' : (selection.type || 'region').toUpperCase();
+  const pctW = Math.round((selection.bounds.width || 0) * 100);
+  const pctH = Math.round((selection.bounds.height || 0) * 100);
+
+  const { widthPx, heightPx } = getPagePixelDimensions();
+  const pinLeft = selection.pixelRect ? selection.pixelRect.left : Math.round(selection.bounds.x * widthPx);
+  const pinTop = selection.pixelRect ? selection.pixelRect.top : Math.round(selection.bounds.y * heightPx);
+  const pinWidth = selection.pixelRect ? selection.pixelRect.width : Math.round(selection.bounds.width * widthPx);
+  const pinHeight = selection.pixelRect ? selection.pixelRect.height : Math.round(selection.bounds.height * heightPx);
+
+  activeCommentTarget = {
+    pageIndex: pageIndex,
+    selector: `[Region: ${typeTag} ${pctW}% × ${pctH}%]`,
+    selectedText: `Selected ${isOval ? 'circle/oval' : selection.type} area on ${state.pageSize === '16:9' ? 'slide' : 'page'} ${pageIndex + 1}`,
+    elementHtml: '',
+    selectionType: isOval ? 'oval' : selection.type,
+    bounds: selection.bounds,
+    points: selection.points || null,
+    pinX: Math.round(pinLeft),
+    pinY: Math.round(pinTop)
+  };
+
+  popoverSelector.textContent = activeCommentTarget.selector;
+  popoverSelectedText.textContent = `Spatial Target: (${Math.round(selection.bounds.x * 100)}%, ${Math.round(selection.bounds.y * 100)}%)`;
+  popoverCommentInput.value = '';
+
+  const screenX = Math.min(window.innerWidth - 330, Math.max(20, iframeRect.left + (pinLeft * state.zoom)));
+  const screenY = Math.min(window.innerHeight - 260, Math.max(65, iframeRect.top + ((pinTop + pinHeight) * state.zoom) + 12));
+
+  commentPopover.style.left = `${screenX}px`;
+  commentPopover.style.top = `${screenY}px`;
+  commentPopover.classList.add('active');
+  popoverCommentInput.focus();
+}
+
+function handleOverlaySelectionClear() {
+  // Selection cleared
 }
 
 function saveComment() {
@@ -2066,18 +2307,23 @@ function saveComment() {
   }
 
   const newComment = {
-    id: `c_${Date.now()}`,
+    id: `c_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
     pageIndex: activeCommentTarget.pageIndex,
     selector: activeCommentTarget.selector,
-    selectedText: activeCommentTarget.selectedText,
-    elementHtml: activeCommentTarget.elementHtml,
+    selectedText: activeCommentTarget.selectedText || '',
+    elementHtml: activeCommentTarget.elementHtml || '',
     userComment: commentText,
+    selectionType: activeCommentTarget.selectionType || 'object',
+    bounds: activeCommentTarget.bounds || { x: 0.1, y: 0.1, width: 0.2, height: 0.1 },
+    points: activeCommentTarget.points || null,
     x: activeCommentTarget.pinX,
     y: activeCommentTarget.pinY,
+    status: 'pending',
+    authorized: false, // Strict human authorization gating
     resolved: false,
     author: currentUser ? currentUser.name : 'Guest User',
     authorEmail: currentUser ? currentUser.email : null,
-    authorId: currentUser ? currentUser.id : 'guest',
+    authorId: currentUser ? (currentUser.uid || currentUser.id) : 'guest',
     authorAvatar: currentUser ? currentUser.avatar : null,
     createdAt: new Date().toISOString()
   };
@@ -2085,6 +2331,7 @@ function saveComment() {
   state.comments.push(newComment);
   commentPopover.classList.remove('active');
   activeCommentTarget = null;
+  if (selectionEngine) selectionEngine.clearSelection();
 
   saveProjects();
   updateAllPins();
@@ -2344,6 +2591,499 @@ async function handleDownloadPptx() {
   }
 }
 
+// ============================================================================
+// DOCUMENT INGESTION & IMPORT PIPELINE (PDF, JSON, DIAGRAM/IMAGE)
+// ============================================================================
+
+// Initialize PDF.js worker
+if (window.pdfjsLib) {
+  try {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
+  } catch (e) {
+    console.warn('[PDF.js Worker Warning]', e);
+  }
+}
+
+// 1. PDF Document Ingestion (.pdf)
+async function importPdfDocument(pdfInput, fileName = 'Imported Document.pdf') {
+  try {
+    let uint8Data = null;
+
+    if (pdfInput instanceof Uint8Array) {
+      uint8Data = pdfInput;
+    } else if (pdfInput instanceof ArrayBuffer) {
+      uint8Data = new Uint8Array(pdfInput);
+    } else if (typeof pdfInput === 'string') {
+      // Base64 string
+      const cleanB64 = pdfInput.replace(/^data:application\/pdf;base64,/, '');
+      const raw = atob(cleanB64);
+      uint8Data = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) {
+        uint8Data[i] = raw.charCodeAt(i);
+      }
+    } else if (pdfInput instanceof Blob || pdfInput instanceof File) {
+      const buffer = await pdfInput.arrayBuffer();
+      uint8Data = new Uint8Array(buffer);
+      fileName = pdfInput.name || fileName;
+    }
+
+    if (!uint8Data || uint8Data.length === 0) {
+      throw new Error('Invalid or empty PDF data provided.');
+    }
+
+    if (!window.pdfjsLib) {
+      throw new Error('PDF.js rendering engine is not loaded. Please verify vendor/pdf.min.js.');
+    }
+
+    const originalBtnText = btnImportPdf ? btnImportPdf.innerHTML : '';
+    if (btnImportPdf) {
+      btnImportPdf.textContent = 'Rendering PDF...';
+      btnImportPdf.disabled = true;
+    }
+
+    const loadingTask = window.pdfjsLib.getDocument({ data: uint8Data });
+    const pdfDoc = await loadingTask.promise;
+    const numPages = pdfDoc.numPages;
+
+    if (numPages === 0) {
+      throw new Error('PDF contains no renderable pages.');
+    }
+
+    const pagesArray = [];
+    let isOverallLandscape = false;
+
+    for (let pageNum = 1; pageNum <= Math.min(numPages, 40); pageNum++) {
+      const page = await pdfDoc.getPage(pageNum);
+      // Render at 2.0x for crisp vector sharpness
+      const renderScale = 2.0;
+      const viewport = page.getViewport({ scale: renderScale });
+      const unscaledViewport = page.getViewport({ scale: 1.0 });
+
+      if (pageNum === 1) {
+        isOverallLandscape = unscaledViewport.width > unscaledViewport.height;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(viewport.width);
+      canvas.height = Math.round(viewport.height);
+      const ctx = canvas.getContext('2d');
+
+      await page.render({
+        canvasContext: ctx,
+        viewport: viewport
+      }).promise;
+
+      const pageImgDataUrl = canvas.toDataURL('image/png');
+
+      // Extract text content layer for sub-pixel selection
+      let textContent = null;
+      try {
+        textContent = await page.getTextContent();
+      } catch (err) {
+        console.warn(`[PDF Page ${pageNum} text extraction notice]:`, err.message);
+      }
+
+      let textLayerSpans = '';
+      if (textContent && textContent.items) {
+        textContent.items.forEach((item, itemIdx) => {
+          if (!item.str || !item.str.trim()) return;
+          const tx = item.transform;
+          const x = tx[4];
+          const y = unscaledViewport.height - tx[5] - (item.height || 12);
+          const pctLeft = +(Math.max(0, Math.min(100, (x / unscaledViewport.width) * 100))).toFixed(2);
+          const pctTop = +(Math.max(0, Math.min(100, (y / unscaledViewport.height) * 100))).toFixed(2);
+          const escapedStr = item.str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          textLayerSpans += `<span class="pdf-text-node" id="pdf-t-${pageNum}-${itemIdx}" style="position: absolute; left: ${pctLeft}%; top: ${pctTop}%; font-size: ${Math.round(item.height || 12)}px; line-height: 1.1; color: transparent; cursor: text; pointer-events: auto;">${escapedStr}</span>\n`;
+        });
+      }
+
+      const pageHtml = `
+<div class="pdf-page-container relative w-full h-full overflow-hidden bg-white select-none" data-pdf-page="${pageNum}" style="width: 100%; height: 100%; position: relative;">
+  <img src="${pageImgDataUrl}" class="absolute inset-0 w-full h-full object-contain pointer-events-none" alt="PDF Page ${pageNum}" style="width: 100%; height: 100%; object-fit: contain;" />
+  <div class="pdf-text-layer absolute inset-0 w-full h-full pointer-events-none" style="position: absolute; inset: 0; width: 100%; height: 100%;">
+    ${textLayerSpans}
+  </div>
+</div>
+      `.trim();
+
+      pagesArray.push({
+        id: `page-pdf-${Date.now()}-${pageNum}`,
+        html: pageHtml,
+        css: ''
+      });
+    }
+
+    const cleanTitle = fileName.replace(/\.[^/.]+$/, '').trim() || 'Imported PDF';
+    const newProj = {
+      id: `proj_pdf_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      title: cleanTitle,
+      docType: 'pdf',
+      pageSize: isOverallLandscape ? '16:9' : 'A4',
+      orientation: isOverallLandscape ? 'landscape' : 'portrait',
+      customWidthMm: null,
+      customHeightMm: null,
+      zoom: isOverallLandscape ? 0.72 : 0.88,
+      mode: 'preview',
+      globalStyles: DEFAULT_GLOBAL_STYLES,
+      ownerId: currentUser ? (currentUser.uid || currentUser.id) : 'guest',
+      ownerEmail: currentUser ? currentUser.email : null,
+      ownerName: currentUser ? currentUser.name : null,
+      assignedAt: new Date().toISOString(),
+      pages: pagesArray,
+      comments: [],
+      createdAt: new Date().toISOString()
+    };
+
+    projects.unshift(newProj);
+    switchProject(newProj.id);
+    saveProjects();
+
+    if (btnImportPdf) {
+      btnImportPdf.innerHTML = originalBtnText;
+      btnImportPdf.disabled = false;
+    }
+
+    alert(`Successfully imported "${cleanTitle}" (${pagesArray.length} page${pagesArray.length > 1 ? 's' : ''}) into Y Master Editor!\nYou can now click components or draw rectangle/circle/oval regions to guide the AI MCP agent.`);
+  } catch (err) {
+    console.error('[PDF Import Error]', err);
+    alert(`Failed to import PDF document:\n${err.message}`);
+    if (btnImportPdf) {
+      btnImportPdf.innerHTML = originalBtnText;
+      btnImportPdf.disabled = false;
+    }
+  }
+}
+
+// 2. JSON Workspace Ingestion (.json)
+async function importWorkspaceJson(input, fileName = 'Workspace.json') {
+  try {
+    let rawText = '';
+    if (typeof input === 'string') {
+      rawText = input;
+    } else if (input instanceof Blob || input instanceof File) {
+      rawText = await input.text();
+      fileName = input.name || fileName;
+    }
+
+    if (!rawText || !rawText.trim()) {
+      throw new Error('Empty JSON file provided.');
+    }
+
+    const parsed = JSON.parse(rawText);
+    const cleanTitle = fileName.replace(/\.[^/.]+$/, '').trim() || 'Imported Workspace';
+
+    // Scenario A: Multi-project bundle { projects: [...] }
+    if (parsed.projects && Array.isArray(parsed.projects)) {
+      let importedCount = 0;
+      parsed.projects.forEach(p => {
+        if (p.pages && Array.isArray(p.pages)) {
+          p.id = `proj_imp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+          projects.unshift(p);
+          importedCount++;
+        }
+      });
+      if (importedCount > 0) {
+        switchProject(projects[0].id);
+        saveProjects();
+        alert(`Successfully imported ${importedCount} project(s) from "${cleanTitle}".`);
+        return;
+      }
+    }
+
+    // Scenario B: Single Project or Canonical Document Model
+    let pages = [];
+    if (parsed.pages && Array.isArray(parsed.pages)) {
+      pages = parsed.pages.map((p, idx) => ({
+        id: p.id || `page-${Date.now()}-${idx}`,
+        html: p.rawHtml || p.html || '',
+        css: p.css || ''
+      }));
+    } else {
+      throw new Error('JSON does not contain a recognized document or project structure (missing "pages" array).');
+    }
+
+    const newProj = {
+      id: `proj_json_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      title: parsed.title || cleanTitle,
+      docType: parsed.docType || 'doc',
+      pageSize: parsed.pageSize || 'A4',
+      orientation: parsed.orientation || 'portrait',
+      customWidthMm: parsed.customWidthMm || null,
+      customHeightMm: parsed.customHeightMm || null,
+      zoom: parsed.zoom || 0.88,
+      mode: 'preview',
+      globalStyles: parsed.globalStyles || DEFAULT_GLOBAL_STYLES,
+      ownerId: currentUser ? (currentUser.uid || currentUser.id) : 'guest',
+      ownerEmail: currentUser ? currentUser.email : null,
+      ownerName: currentUser ? currentUser.name : null,
+      assignedAt: new Date().toISOString(),
+      pages: pages,
+      comments: Array.isArray(parsed.comments) ? parsed.comments : [],
+      createdAt: new Date().toISOString()
+    };
+
+    projects.unshift(newProj);
+    switchProject(newProj.id);
+    saveProjects();
+
+    alert(`Successfully opened workspace project "${newProj.title}" (${pages.length} page${pages.length > 1 ? 's' : ''}).`);
+  } catch (err) {
+    console.error('[JSON Import Error]', err);
+    alert(`Failed to import JSON workspace:\n${err.message}`);
+  }
+}
+
+// 3. Image / Diagram Ingestion (.png, .jpg, .svg, .webp)
+async function importImageDocument(input, fileName = 'Diagram.png', isSvg = false, textContent = null) {
+  try {
+    let dataUrl = '';
+    let svgBody = textContent;
+
+    if (typeof input === 'string') {
+      if (input.startsWith('data:')) {
+        dataUrl = input;
+      } else if (input.trim().startsWith('<svg')) {
+        isSvg = true;
+        svgBody = input;
+        dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(input)}`;
+      } else {
+        dataUrl = input;
+      }
+    } else if (input instanceof Blob || input instanceof File) {
+      fileName = input.name || fileName;
+      const ext = fileName.split('.').pop().toLowerCase();
+      isSvg = ext === 'svg';
+      if (isSvg) {
+        svgBody = await input.text();
+        dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(svgBody)}`;
+      } else {
+        dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(input);
+        });
+      }
+    }
+
+    const cleanTitle = fileName.replace(/\.[^/.]+$/, '').trim() || 'Scientific Diagram';
+
+    const pageHtml = isSvg && svgBody ? `
+<div class="h-full flex flex-col justify-between p-12 bg-[#faf7f2] text-[#241c15]">
+  <div>
+    <div class="flex justify-between items-baseline border-b border-[#dcd3c5] pb-4 mb-6">
+      <div>
+        <p class="text-xs uppercase tracking-[0.25em] font-semibold text-[#8c633a]">Scientific Diagram &bull; Vector Specification</p>
+        <h1 class="text-3xl font-serif text-[#241c15] mt-1 font-normal tracking-wide">${cleanTitle}</h1>
+      </div>
+      <span class="text-xs uppercase tracking-widest text-[#a85620] font-semibold bg-[#ede7df] px-3 py-1 rounded-full border border-[#dcd3c5]">Vector Diagram</span>
+    </div>
+    <div class="diagram-canvas-box flex items-center justify-center p-6 bg-white border border-[#dcd3c5] rounded-xl shadow-xs overflow-auto max-h-[640px]">
+      <div id="scientific-diagram-container" class="w-full flex items-center justify-center">
+        ${svgBody}
+      </div>
+    </div>
+  </div>
+  <div class="border-t border-[#dcd3c5] pt-3 flex justify-between items-center text-xs text-[#786755]">
+    <span>Y Master Editor &bull; Regional Transformation Studio</span>
+    <span>Figure 01 &bull; Ready for AI Pin Instructions</span>
+  </div>
+</div>
+    `.trim() : `
+<div class="h-full flex flex-col justify-between p-12 bg-[#faf7f2] text-[#241c15]">
+  <div>
+    <div class="flex justify-between items-baseline border-b border-[#dcd3c5] pb-4 mb-6">
+      <div>
+        <p class="text-xs uppercase tracking-[0.25em] font-semibold text-[#8c633a]">Scientific Illustration &bull; Visual Asset</p>
+        <h1 class="text-3xl font-serif text-[#241c15] mt-1 font-normal tracking-wide">${cleanTitle}</h1>
+      </div>
+      <span class="text-xs uppercase tracking-widest text-[#a85620] font-semibold bg-[#ede7df] px-3 py-1 rounded-full border border-[#dcd3c5]">Raster Graphic</span>
+    </div>
+    <div class="diagram-canvas-box flex items-center justify-center p-6 bg-white border border-[#dcd3c5] rounded-xl shadow-xs overflow-auto max-h-[640px]">
+      <img id="scientific-diagram-image" src="${dataUrl}" class="max-w-full max-h-[580px] object-contain rounded" alt="${cleanTitle}" />
+    </div>
+  </div>
+  <div class="border-t border-[#dcd3c5] pt-3 flex justify-between items-center text-xs text-[#786755]">
+    <span>Y Master Editor &bull; Regional Transformation Studio</span>
+    <span>Figure 01 &bull; Ready for AI Pin Instructions</span>
+  </div>
+</div>
+    `.trim();
+
+    const newProj = {
+      id: `proj_diagram_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      title: cleanTitle,
+      docType: 'diagram',
+      pageSize: 'A4',
+      orientation: 'landscape',
+      customWidthMm: null,
+      customHeightMm: null,
+      zoom: 0.82,
+      mode: 'preview',
+      globalStyles: DEFAULT_GLOBAL_STYLES,
+      ownerId: currentUser ? (currentUser.uid || currentUser.id) : 'guest',
+      ownerEmail: currentUser ? currentUser.email : null,
+      ownerName: currentUser ? currentUser.name : null,
+      assignedAt: new Date().toISOString(),
+      pages: [{ id: `page-diag-${Date.now()}`, html: pageHtml, css: '' }],
+      comments: [],
+      createdAt: new Date().toISOString()
+    };
+
+    projects.unshift(newProj);
+    switchProject(newProj.id);
+    saveProjects();
+
+    alert(`Successfully imported diagram "${cleanTitle}"!\nUse the Pointer, Rectangle, or Circle/Oval tool to select any region and pin your AI instructions.`);
+  } catch (err) {
+    console.error('[Diagram Import Error]', err);
+    alert(`Failed to import image or diagram:\n${err.message}`);
+  }
+}
+
+// Setup Import Buttons & Ingestion Event Listeners
+function setupDocumentIngestion() {
+  if (btnImportPdf) {
+    btnImportPdf.addEventListener('click', async () => {
+      if (window.electronAPI && window.electronAPI.openDocumentDialog) {
+        try {
+          const res = await window.electronAPI.openDocumentDialog({ type: 'pdf', title: 'Import PDF Document — Y Master Editor' });
+          if (!res.canceled && res.success && res.base64) {
+            await importPdfDocument(res.base64, res.fileName);
+          }
+        } catch (err) {
+          console.error('[Open PDF Dialog Error]', err);
+          if (fileInputPdf) fileInputPdf.click();
+        }
+      } else if (fileInputPdf) {
+        fileInputPdf.click();
+      }
+    });
+  }
+
+  if (fileInputPdf) {
+    fileInputPdf.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) {
+        await importPdfDocument(file, file.name);
+        fileInputPdf.value = '';
+      }
+    });
+  }
+
+  if (btnImportWorkspace) {
+    btnImportWorkspace.addEventListener('click', async () => {
+      if (window.electronAPI && window.electronAPI.openDocumentDialog) {
+        try {
+          const res = await window.electronAPI.openDocumentDialog({ type: 'workspace', title: 'Open Workspace JSON — Y Master Editor' });
+          if (!res.canceled && res.success && res.content) {
+            await importWorkspaceJson(res.content, res.fileName);
+          }
+        } catch (err) {
+          console.error('[Open Workspace Dialog Error]', err);
+          if (fileInputWorkspace) fileInputWorkspace.click();
+        }
+      } else if (fileInputWorkspace) {
+        fileInputWorkspace.click();
+      }
+    });
+  }
+
+  if (fileInputWorkspace) {
+    fileInputWorkspace.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) {
+        await importWorkspaceJson(file, file.name);
+        fileInputWorkspace.value = '';
+      }
+    });
+  }
+
+  if (btnImportImage) {
+    btnImportImage.addEventListener('click', async () => {
+      if (window.electronAPI && window.electronAPI.openDocumentDialog) {
+        try {
+          const res = await window.electronAPI.openDocumentDialog({ type: 'image', title: 'Import Diagram / Image — Y Master Editor' });
+          if (!res.canceled && res.success) {
+            await importImageDocument(res.dataUrl, res.fileName, res.isSvg, res.textContent);
+          }
+        } catch (err) {
+          console.error('[Open Image Dialog Error]', err);
+          if (fileInputImage) fileInputImage.click();
+        }
+      } else if (fileInputImage) {
+        fileInputImage.click();
+      }
+    });
+  }
+
+  if (fileInputImage) {
+    fileInputImage.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) {
+        await importImageDocument(file, file.name);
+        fileInputImage.value = '';
+      }
+    });
+  }
+
+  // Drag and Drop Ingestion onto Canvas Viewport
+  let dragCounter = 0;
+  const showDropzone = () => {
+    if (canvasDropzoneOverlay) canvasDropzoneOverlay.classList.add('drag-active');
+  };
+  const hideDropzone = () => {
+    if (canvasDropzoneOverlay) canvasDropzoneOverlay.classList.remove('drag-active');
+  };
+
+  window.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+    if (e.dataTransfer && e.dataTransfer.types && (e.dataTransfer.types.includes('Files') || e.dataTransfer.types.indexOf('Files') !== -1)) {
+      showDropzone();
+    }
+  });
+
+  window.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+  });
+
+  window.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      hideDropzone();
+    }
+  });
+
+  window.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    hideDropzone();
+
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const name = file.name || '';
+      const ext = name.split('.').pop().toLowerCase();
+
+      if (ext === 'pdf') {
+        await importPdfDocument(file, name);
+      } else if (ext === 'json') {
+        await importWorkspaceJson(file, name);
+      } else if (['png', 'jpg', 'jpeg', 'svg', 'webp'].includes(ext)) {
+        await importImageDocument(file, name, ext === 'svg');
+      } else {
+        alert(`Unsupported file format: .${ext}\nPlease drop a .pdf, .json, or image file.`);
+      }
+    }
+  });
+}
+
 // Live MCP Bridge
 function broadcastStateToMcp() {
   const payload = {
@@ -2411,7 +3151,48 @@ function setupMcpListener() {
 
 // Handle AI Agent Commands
 async function handleMcpCommand(msg) {
-  if (!msg || !msg.action) return;
+  if (!msg) return;
+
+  // 1. Reactive Notifications from MCP Transaction Engine
+  if (msg.type === 'DOCUMENT_UPDATED' || msg.action === 'DOCUMENT_UPDATED' || msg.type === 'TRANSACTION_COMMITTED') {
+    if (window.electronAPI && window.electronAPI.getMcpDocumentState) {
+      try {
+        const res = await window.electronAPI.getMcpDocumentState();
+        if (res && res.success && res.doc) {
+          if (res.doc.pages && Array.isArray(res.doc.pages)) {
+            state.pages = res.doc.pages.map(p => ({
+              id: p.id,
+              html: p.rawHtml || p.html || '',
+              css: p.css || ''
+            }));
+          }
+          if (res.doc.comments && Array.isArray(res.doc.comments)) {
+            state.comments = res.doc.comments;
+          }
+          saveProjects();
+          renderAllPages();
+          updateSidebar();
+          updateAllPins();
+        }
+      } catch (err) {
+        console.warn('[Sync MCP Document Error]:', err);
+      }
+    }
+    return;
+  }
+
+  if (msg.type === 'INSTRUCTION_AUTHORIZED') {
+    const c = state.comments.find(item => item.id === msg.commentId);
+    if (c) {
+      c.authorized = !!msg.authorized;
+      c.status = msg.authorized ? 'authorized' : 'pending';
+      saveProjects();
+      updateSidebar();
+    }
+    return;
+  }
+
+  if (!msg.action) return;
 
   const { requestId, action, payload } = msg;
   let responseData = { success: true };
@@ -2469,6 +3250,21 @@ async function handleMcpCommand(msg) {
         responseData = { success: true, updatedSelector: payload.selector, pageNumber: pageIdx + 1 };
       } else {
         responseData = { error: `Page ${payload.pageIndex} not found.` };
+      }
+      break;
+    }
+
+    case 'authorize_instruction': {
+      const c = state.comments.find(item => item.id === payload.commentId);
+      if (c) {
+        c.authorized = payload.authorize !== false;
+        c.status = c.authorized ? 'authorized' : 'pending';
+        saveProjects();
+        updateSidebar();
+        broadcastStateToMcp();
+        responseData = { success: true, commentId: payload.commentId, authorized: c.authorized };
+      } else {
+        responseData = { error: 'Comment not found' };
       }
       break;
     }
@@ -2992,10 +3788,24 @@ function bindEvents() {
 
   // Sidebar Comments List Actions
   sidebarCommentsList.addEventListener('click', (e) => {
+    const authBtn = e.target.closest('.btn-authorize');
     const resolveBtn = e.target.closest('.btn-resolve');
     const scrollBtn = e.target.closest('[data-scroll-comment]');
 
-    if (resolveBtn) {
+    if (authBtn) {
+      const commentId = authBtn.dataset.commentId;
+      const c = state.comments.find(item => item.id === commentId);
+      if (c) {
+        c.authorized = !c.authorized;
+        c.status = c.authorized ? 'authorized' : 'pending';
+        saveProjects();
+        updateSidebar();
+        broadcastStateToMcp();
+        if (window.electronAPI && window.electronAPI.authorizeInstruction) {
+          window.electronAPI.authorizeInstruction({ commentId, authorize: c.authorized });
+        }
+      }
+    } else if (resolveBtn) {
       const commentId = resolveBtn.dataset.commentId;
       const c = state.comments.find(item => item.id === commentId);
       if (c) {
@@ -3012,6 +3822,33 @@ function bindEvents() {
     }
   });
 
+  // Batch Authorization for all pending instructions
+  if (btnImplementAllComments) {
+    btnImplementAllComments.addEventListener('click', () => {
+      const pendingUnauth = state.comments.filter(c => !c.resolved && !c.authorized);
+      if (pendingUnauth.length === 0) {
+        alert('All pending instructions are already authorized for the AI agent.');
+        return;
+      }
+      pendingUnauth.forEach(c => {
+        c.authorized = true;
+        c.status = 'authorized';
+        if (window.electronAPI && window.electronAPI.authorizeInstruction) {
+          window.electronAPI.authorizeInstruction({ commentId: c.id, authorize: true });
+        }
+      });
+      saveProjects();
+      updateSidebar();
+      broadcastStateToMcp();
+      alert(`Authorized ${pendingUnauth.length} pending instruction(s). The AI MCP Agent is granted execution permission!`);
+    });
+  }
+
+  // Selection Tool Mode Buttons
+  if (btnSelObject) btnSelObject.addEventListener('click', () => setSelectionMode('object'));
+  if (btnSelRect) btnSelRect.addEventListener('click', () => setSelectionMode('rectangle'));
+  if (btnSelLasso) btnSelLasso.addEventListener('click', () => setSelectionMode('oval'));
+
   // Canvas Action Delegation
   pagesContainer.addEventListener('click', (e) => {
     const btnDrawer = e.target.closest('.btn-open-drawer');
@@ -3027,12 +3864,14 @@ function bindEvents() {
     btnCancelComment.addEventListener('click', () => {
       if (commentPopover) commentPopover.classList.remove('active');
       activeCommentTarget = null;
+      if (selectionEngine) selectionEngine.clearSelection();
     });
   }
   if (btnClosePopover) {
     btnClosePopover.addEventListener('click', () => {
       if (commentPopover) commentPopover.classList.remove('active');
       activeCommentTarget = null;
+      if (selectionEngine) selectionEngine.clearSelection();
     });
   }
 
@@ -3050,124 +3889,353 @@ function bindEvents() {
   if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeCodeDrawer);
   if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeCodeDrawer);
 
+  // Setup Document Ingestion & Import (PDF, JSON, Images, Drag & Drop)
+  setupDocumentIngestion();
+
   // Output Actions
   if (btnPrint) btnPrint.addEventListener('click', handlePrint);
   if (btnDownloadPdf) btnDownloadPdf.addEventListener('click', handleDownloadPdf);
   if (btnDownloadPptx) btnDownloadPptx.addEventListener('click', handleDownloadPptx);
 
-  // MCP Info Modal Listeners
+  // MCP Info Modal Listeners & Universal Multi-Provider Switching
+  const btnMcpConnect = document.getElementById('btn-mcp-connect');
   const btnOpenMcpModal = document.getElementById('btn-open-mcp-modal');
   const btnCloseMcpModal = document.getElementById('btn-close-mcp-modal');
   const mcpModal = document.getElementById('mcp-info-modal');
   const mcpBackdrop = document.getElementById('mcp-modal-backdrop');
   const btnCopyMcpConfig = document.getElementById('btn-copy-mcp-config');
+  const btnCopyLabel = document.getElementById('btn-copy-label');
   const mcpSnippet = document.getElementById('mcp-config-snippet');
+  const mcpTabTitle = document.getElementById('mcp-config-tab-title');
+  const mcpInstruction = document.getElementById('mcp-provider-instruction');
+  const mcpTabsNav = document.getElementById('mcp-tabs-nav');
+  const btnCopyUrl = document.getElementById('btn-copy-url');
+  const btnCopyCmd = document.getElementById('btn-copy-cmd');
 
-  if (btnOpenMcpModal && mcpModal) {
-    btnOpenMcpModal.addEventListener('click', () => {
-      mcpModal.classList.add('active');
-      if (mcpBackdrop) mcpBackdrop.classList.add('active');
-    });
-
-    const closeMcp = () => {
-      mcpModal.classList.remove('active');
-      if (mcpBackdrop) mcpBackdrop.classList.remove('active');
-    };
-
-    if (btnCloseMcpModal) btnCloseMcpModal.addEventListener('click', closeMcp);
-    if (mcpBackdrop) mcpBackdrop.addEventListener('click', closeMcp);
-
-    if (btnCopyMcpConfig && mcpSnippet) {
-      btnCopyMcpConfig.addEventListener('click', () => {
-        navigator.clipboard.writeText(mcpSnippet.textContent.trim()).then(() => {
-          const prev = btnCopyMcpConfig.textContent;
-          btnCopyMcpConfig.textContent = '✓ Copied!';
-          setTimeout(() => { btnCopyMcpConfig.textContent = prev; }, 1800);
-        });
-      });
+  const MCP_CONFIGS = {
+    claude: {
+      title: 'claude_desktop_config.json',
+      buttonLabel: 'Copy Claude Config',
+      instruction: 'Paste into your <code>claude_desktop_config.json</code> under <code>mcpServers</code> and restart Claude Desktop or Claude Code.',
+      snippet: JSON.stringify({
+        mcpServers: {
+          "y-master-editor": {
+            command: "node",
+            args: [
+              "Y:\\github repositories\\Y-Master-Editor\\electron\\mcp-server.cjs"
+            ]
+          }
+        }
+      }, null, 2)
+    },
+    openai: {
+      title: 'OpenAI Agent / ChatGPT Actions Endpoint',
+      buttonLabel: 'Copy OpenAI SSE Endpoint',
+      instruction: 'Connect your OpenAI Assistant or custom GPT agent directly via Streamable HTTP / SSE. Zero installation needed.',
+      snippet: JSON.stringify({
+        type: "mcp",
+        name: "y-master-editor",
+        server_url: "http://127.0.0.1:48721/mcp",
+        transport: "streamable_http"
+      }, null, 2)
+    },
+    cursor: {
+      title: 'Cursor Features → MCP Settings',
+      buttonLabel: 'Copy Cursor MCP Config',
+      instruction: 'Add under <strong>Cursor Settings &gt; Features &gt; MCP</strong>. Select Type <em>command</em> or <em>sse</em>.',
+      snippet: JSON.stringify({
+        mcpServers: {
+          "y-master-editor": {
+            command: "node",
+            args: [
+              "Y:\\github repositories\\Y-Master-Editor\\electron\\mcp-server.cjs"
+            ]
+          }
+        }
+      }, null, 2)
+    },
+    vscode: {
+      title: '.vscode/settings.json or Windsurf',
+      buttonLabel: 'Copy VS Code Config',
+      instruction: 'Add to your VS Code <code>settings.json</code> or Windsurf Cascade MCP settings configuration.',
+      snippet: JSON.stringify({
+        mcpServers: {
+          "y-master-editor": {
+            command: "node",
+            args: [
+              "Y:\\github repositories\\Y-Master-Editor\\electron\\mcp-server.cjs"
+            ]
+          }
+        }
+      }, null, 2)
     }
-  }
-
-  // --- Google Authentication & Scoped Workspace Event Listeners ---
-  const closeGoogleModal = () => {
-    if (googleSigninModal) googleSigninModal.classList.remove('active');
-    if (googleSigninBackdrop) googleSigninBackdrop.classList.remove('active');
   };
 
-  if (btnGoogleSignin) {
-    btnGoogleSignin.addEventListener('click', () => {
-      if (googleSigninModal) googleSigninModal.classList.add('active');
-      if (googleSigninBackdrop) googleSigninBackdrop.classList.add('active');
+  let activeMcpProvider = 'claude';
+
+  const highlightJson = (code) => {
+    return code
+      .replace(/"([^"]+)"(?=\s*:)/g, '<span class="syn-key">"$1"</span>')
+      .replace(/(:\s*)"([^"]*)"/g, '$1<span class="syn-str">"$2"</span>')
+      .replace(/(\[\s*)"([^"]*)"(\s*\])/g, '$1<span class="syn-str">"$2"</span>$3')
+      .replace(/:/g, '<span class="syn-colon">:</span>')
+      .replace(/([{}])/g, '<span class="syn-brace">$1</span>')
+      .replace(/([\[\]])/g, '<span class="syn-bracket">$1</span>');
+  };
+
+  const renderActiveMcpProvider = () => {
+    const data = MCP_CONFIGS[activeMcpProvider];
+    if (!data) return;
+    if (mcpTabTitle) mcpTabTitle.textContent = data.title;
+    if (btnCopyLabel) btnCopyLabel.textContent = data.buttonLabel;
+    if (mcpInstruction) mcpInstruction.innerHTML = data.instruction;
+    if (mcpSnippet) {
+      mcpSnippet.innerHTML = highlightJson(data.snippet);
+    }
+  };
+
+  const copyToClipboard = async (text, triggerBtn, originalText) => {
+    let copied = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      } catch (err) {
+        // Fallback to execCommand on permission/focus rejection
+      }
+    }
+    if (!copied) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        copied = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch (err) {
+        console.warn('Clipboard fallback error:', err);
+      }
+    }
+    if (triggerBtn) {
+      const lbl = triggerBtn.querySelector('span') || triggerBtn;
+      const prev = lbl.textContent;
+      lbl.textContent = '✓ Copied!';
+      setTimeout(() => { lbl.textContent = originalText || prev; }, 1800);
+    }
+  };
+
+  const openMcpModal = () => {
+    if (mcpModal) mcpModal.classList.add('active');
+    if (mcpBackdrop) mcpBackdrop.classList.add('active');
+    renderActiveMcpProvider();
+  };
+
+  const closeMcpModal = () => {
+    if (mcpModal) mcpModal.classList.remove('active');
+    if (mcpBackdrop) mcpBackdrop.classList.remove('active');
+  };
+
+  if (btnMcpConnect) btnMcpConnect.addEventListener('click', openMcpModal);
+  if (btnOpenMcpModal) btnOpenMcpModal.addEventListener('click', openMcpModal);
+  if (btnCloseMcpModal) btnCloseMcpModal.addEventListener('click', closeMcpModal);
+  if (mcpBackdrop) mcpBackdrop.addEventListener('click', closeMcpModal);
+
+  if (mcpTabsNav) {
+    mcpTabsNav.addEventListener('click', (e) => {
+      const tabBtn = e.target.closest('.mcp-tab-btn');
+      if (!tabBtn) return;
+      const provider = tabBtn.dataset.provider;
+      if (!provider || !MCP_CONFIGS[provider]) return;
+      mcpTabsNav.querySelectorAll('.mcp-tab-btn').forEach(b => b.classList.remove('active'));
+      tabBtn.classList.add('active');
+      activeMcpProvider = provider;
+      renderActiveMcpProvider();
     });
   }
 
-  if (btnCloseGoogleModal) btnCloseGoogleModal.addEventListener('click', closeGoogleModal);
-  if (btnCancelGoogleModal) btnCancelGoogleModal.addEventListener('click', closeGoogleModal);
-  if (googleSigninBackdrop) googleSigninBackdrop.addEventListener('click', closeGoogleModal);
+  if (btnCopyMcpConfig) {
+    btnCopyMcpConfig.addEventListener('click', () => {
+      const data = MCP_CONFIGS[activeMcpProvider];
+      if (data) {
+        copyToClipboard(data.snippet, btnCopyLabel, data.buttonLabel);
+      }
+    });
+  }
+
+  if (btnCopyUrl) {
+    btnCopyUrl.addEventListener('click', () => {
+      copyToClipboard('http://127.0.0.1:48721/mcp', btnCopyUrl, 'Copy URL');
+    });
+  }
+
+  if (btnCopyCmd) {
+    btnCopyCmd.addEventListener('click', () => {
+      copyToClipboard('node electron/mcp-server.cjs', btnCopyCmd, 'Copy Command');
+    });
+  }
+
+  // Initialize MCP modal snippet
+  renderActiveMcpProvider();
+
+  // --- Omni-Auth, Nicknames & Telemetry Event Listeners ---
+  if (btnOpenAuthModal) {
+    btnOpenAuthModal.addEventListener('click', () => {
+      openAuthModal('signup');
+    });
+  }
+
+  if (btnCloseAuthModal) btnCloseAuthModal.addEventListener('click', closeAuthModal);
+  if (authModalBackdrop) authModalBackdrop.addEventListener('click', closeAuthModal);
+
+  // Tabs switching
+  if (tabBtnSignin) {
+    tabBtnSignin.addEventListener('click', () => {
+      openAuthModal('signin');
+    });
+  }
+  if (tabBtnSignup) {
+    tabBtnSignup.addEventListener('click', () => {
+      openAuthModal('signup');
+    });
+  }
+
+  // Live Animated SVG Avatar preview on Nickname input
+  let nicknameCheckTimeout = null;
+  if (authSignupNickname) {
+    authSignupNickname.addEventListener('input', (e) => {
+      const val = e.target.value.trim().replace(/[^a-zA-Z0-9_]/g, '');
+      if (signupAvatarStage && window.YAvatarEngine) {
+        window.YAvatarEngine.renderAvatar(signupAvatarStage, val || 'YMaster', { size: 90, animated: true });
+      }
+
+      if (nicknameCheckTimeout) clearTimeout(nicknameCheckTimeout);
+      nicknameCheckTimeout = setTimeout(async () => {
+        if (!val || val.length < 3) {
+          if (signupNicknameFeedback) {
+            signupNicknameFeedback.className = 'nickname-feedback-badge unavailable';
+            signupNicknameFeedback.textContent = 'At least 3 alphanumeric characters.';
+          }
+          return;
+        }
+
+        if (window.FoliyoFirebase && window.FoliyoFirebase.checkNickname) {
+          const res = await window.FoliyoFirebase.checkNickname(val);
+          if (signupNicknameFeedback) {
+            if (res && res.available) {
+              signupNicknameFeedback.className = 'nickname-feedback-badge available';
+              signupNicknameFeedback.textContent = `✓ @${res.nickname} is available!`;
+            } else {
+              signupNicknameFeedback.className = 'nickname-feedback-badge unavailable';
+              signupNicknameFeedback.textContent = (res && res.error) || 'Nickname taken.';
+            }
+          }
+        }
+      }, 250);
+    });
+  }
+
+  // Shuffle Nickname Button
+  if (btnShuffleNickname) {
+    btnShuffleNickname.addEventListener('click', () => {
+      if (window.YAvatarEngine && authSignupNickname) {
+        const newNick = window.YAvatarEngine.generateFunNickname();
+        authSignupNickname.value = newNick;
+        window.YAvatarEngine.renderAvatar(signupAvatarStage, newNick, { size: 90, animated: true });
+        if (signupNicknameFeedback) {
+          signupNicknameFeedback.className = 'nickname-feedback-badge available';
+          signupNicknameFeedback.textContent = `✓ Generated @${newNick}`;
+        }
+      }
+    });
+  }
+
+  // Sign Up with Nickname & Password
+  if (btnDoSignup) {
+    btnDoSignup.addEventListener('click', async () => {
+      const nick = authSignupNickname ? authSignupNickname.value.trim() : '';
+      const email = authSignupEmail ? authSignupEmail.value.trim() : '';
+      const pass = authSignupPassword ? authSignupPassword.value : '';
+      const confirm = authSignupConfirm ? authSignupConfirm.value : '';
+
+      if (!nick || nick.length < 3) {
+        showAuthError('Please choose a nickname with at least 3 characters.');
+        return;
+      }
+      if (!pass || pass.length < 6) {
+        showAuthError('Password must be at least 6 characters long.');
+        return;
+      }
+      if (pass !== confirm) {
+        showAuthError('Passwords do not match. Please verify.');
+        return;
+      }
+
+      btnDoSignup.disabled = true;
+      btnDoSignup.textContent = 'Claiming Nickname...';
+
+      const res = await signUpWithNicknameAccount(nick, pass, email);
+      btnDoSignup.disabled = false;
+      btnDoSignup.textContent = 'Create Account & Claim Nickname';
+
+      if (res && res.success) {
+        closeAuthModal();
+      } else {
+        showAuthError((res && res.error) || 'Registration failed.');
+      }
+    });
+  }
+
+  // Sign In with Nickname / Email & Password
+  if (btnDoSignin) {
+    btnDoSignin.addEventListener('click', async () => {
+      const input = authSigninInput ? authSigninInput.value.trim() : '';
+      const pass = authSigninPassword ? authSigninPassword.value : '';
+
+      if (!input || !pass) {
+        showAuthError('Please enter your nickname/email and password.');
+        return;
+      }
+
+      btnDoSignin.disabled = true;
+      btnDoSignin.textContent = 'Authenticating...';
+
+      const res = await loginWithNicknameCredentials(input, pass);
+      btnDoSignin.disabled = false;
+      btnDoSignin.textContent = 'Sign In to Studio';
+
+      if (res && res.success) {
+        closeAuthModal();
+      } else {
+        showAuthError((res && res.error) || 'Invalid credentials.');
+      }
+    });
+  }
+
+  // Social Auth Buttons
+  if (btnSocialGoogle) btnSocialGoogle.addEventListener('click', () => { closeAuthModal(); loginWithSocialProvider('google'); });
+  if (btnSocialFacebook) btnSocialFacebook.addEventListener('click', () => { closeAuthModal(); loginWithSocialProvider('facebook'); });
+  if (btnSocialGithub) btnSocialGithub.addEventListener('click', () => { closeAuthModal(); loginWithSocialProvider('github'); });
+  if (btnSocialApple) btnSocialApple.addEventListener('click', () => { closeAuthModal(); loginWithSocialProvider('apple'); });
+
+  // Guest Mode
+  if (btnAuthGuest) {
+    btnAuthGuest.addEventListener('click', () => {
+      closeAuthModal();
+    });
+  }
 
   // User Profile Pill & Dropdown Toggle
   if (btnUserProfile) {
     btnUserProfile.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (userProfileDropdown) userProfileDropdown.classList.toggle('active');
-    });
-  }
-
-  // Account Choices in Google Sign-In Modal
-  if (googleAccountsPicker) {
-    googleAccountsPicker.addEventListener('click', (e) => {
-      const choice = e.target.closest('.google-account-choice');
-      if (!choice) return;
-
-      const allChoices = googleAccountsPicker.querySelectorAll('.google-account-choice');
-      allChoices.forEach(c => c.classList.remove('active'));
-      choice.classList.add('active');
-
-      if (choice.id === 'choice-custom-google') {
-        if (customGoogleForm) customGoogleForm.style.display = 'block';
-        if (customGoogleName) customGoogleName.focus();
-      } else {
-        if (customGoogleForm) customGoogleForm.style.display = 'none';
-      }
-    });
-  }
-
-  // Confirm Google Sign-In
-  if (btnConfirmGoogleSignin) {
-    btnConfirmGoogleSignin.addEventListener('click', async () => {
-      const activeChoice = googleAccountsPicker ? googleAccountsPicker.querySelector('.google-account-choice.active') : null;
-      let accountData = null;
-
-      if (activeChoice && activeChoice.id === 'choice-custom-google') {
-        const email = customGoogleEmail ? customGoogleEmail.value.trim() : '';
-        const name = customGoogleName ? customGoogleName.value.trim() : '';
-        const clientId = customGoogleClientId ? customGoogleClientId.value.trim() : '';
-        if (!email) {
-          alert('Please enter a valid Google Account email.');
-          return;
+      if (userProfileDropdown) {
+        userProfileDropdown.classList.toggle('active');
+        if (currentUser && currentUser.uid) {
+          renderActiveTelemetry(currentUser.uid);
         }
-        accountData = {
-          name: name || email.split('@')[0],
-          email: email,
-          uid: clientId ? `firebase_${clientId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 16)}` : undefined
-        };
-      } else if (activeChoice) {
-        accountData = {
-          email: activeChoice.dataset.email,
-          name: activeChoice.dataset.name,
-          avatar: activeChoice.dataset.avatar
-        };
-      } else {
-        accountData = {
-          email: 'alex.morgan@gmail.com',
-          name: 'Alex Morgan',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
-        };
       }
-
-      const assignExisting = chkAssignExisting ? chkAssignExisting.checked : false;
-      closeGoogleModal();
-      await loginWithGoogle(accountData, assignExisting);
     });
   }
 
@@ -3183,8 +4251,7 @@ function bindEvents() {
   if (btnSwitchAccount) {
     btnSwitchAccount.addEventListener('click', () => {
       if (userProfileDropdown) userProfileDropdown.classList.remove('active');
-      if (googleSigninModal) googleSigninModal.classList.add('active');
-      if (googleSigninBackdrop) googleSigninBackdrop.classList.add('active');
+      openAuthModal('signin');
     });
   }
 
@@ -3244,6 +4311,34 @@ function bindEvents() {
   if (btnCancelUpdate) btnCancelUpdate.addEventListener('click', window.closeUpdateModal);
   if (updateModalBackdrop) updateModalBackdrop.addEventListener('click', window.closeUpdateModal);
 
+  // Wire Desktop Auto-Updater IPC Listeners
+  if (window.electronUpdater) {
+    if (typeof window.electronUpdater.onProgress === 'function') {
+      window.electronUpdater.onProgress((pct) => {
+        if (updateProgressContainer) updateProgressContainer.style.display = 'block';
+        if (updateProgressFill) updateProgressFill.style.width = `${pct}%`;
+        if (updateProgressPct) updateProgressPct.textContent = `${pct}%`;
+        if (updateProgressStatus) updateProgressStatus.textContent = `Downloading update (${pct}%)...`;
+      });
+    }
+
+    if (typeof window.electronUpdater.onError === 'function') {
+      window.electronUpdater.onError((err) => {
+        console.warn('[AutoUpdater Notice in UI]:', err);
+      });
+    }
+
+    if (typeof window.electronUpdater.onAvailable === 'function') {
+      window.electronUpdater.onAvailable((info) => {
+        console.log('[AutoUpdater Available]:', info);
+        if (btnConfirmUpdateLabel && info && info.version) {
+          btnConfirmUpdateLabel.textContent = `Update to v${info.version} Now`;
+        }
+        window.openUpdateModal();
+      });
+    }
+  }
+
   if (btnConfirmAppUpdate) {
     btnConfirmAppUpdate.addEventListener('click', async () => {
       if (updateProgressContainer) updateProgressContainer.style.display = 'block';
@@ -3255,22 +4350,32 @@ function bindEvents() {
         if (updateProgressStatus) updateProgressStatus.textContent = msg;
       };
 
-      setProgress(15, 'Scanning previous installed version (v1.0.0)...');
-      await new Promise(r => setTimeout(r, 400));
+      // 1. Mandatory Blueprint: Try electron-updater GitHub release download & silent hot-swap
+      if (window.electronUpdater && typeof window.electronUpdater.downloadAndInstall === 'function') {
+        setProgress(10, 'Contacting GitHub Releases & preparing update...');
+        try {
+          await window.electronUpdater.downloadAndInstall();
+          setProgress(100, 'Release downloaded! Silent hot-swap and relaunch in progress...');
+          return;
+        } catch (updateErr) {
+          console.warn('[AutoUpdater download error, falling back to local runner]:', updateErr.message);
+        }
+      }
 
-      setProgress(35, 'Preserving local projects and Google credentials...');
+      // 2. Fallback local / dev installer pipeline
+      setProgress(25, 'Preserving local projects and workspace state...');
       saveProjects();
-      await new Promise(r => setTimeout(r, 450));
+      await new Promise(r => setTimeout(r, 350));
 
-      setProgress(60, 'Staging Y Master Editor v2.0 package & Light Earth Tone design system...');
-      await new Promise(r => setTimeout(r, 550));
+      setProgress(60, 'Staging Y Master Editor package & Light Earth Tone design system...');
+      await new Promise(r => setTimeout(r, 450));
 
       setProgress(85, 'Executing update installer...');
 
       if (window.electronAPI && window.electronAPI.installAppUpdate) {
         try {
           const res = await window.electronAPI.installAppUpdate();
-          setProgress(100, res.message || 'Y Master Editor v2.0 installer launched! Follow on-screen setup to finish.');
+          setProgress(100, res.message || 'Y Master Editor installer launched! Follow on-screen setup to finish.');
           if (btnConfirmUpdateLabel) btnConfirmUpdateLabel.textContent = 'Relaunch App';
           btnConfirmAppUpdate.disabled = false;
           btnConfirmAppUpdate.onclick = () => {
@@ -3285,7 +4390,7 @@ function bindEvents() {
           setTimeout(() => window.location.reload(), 1500);
         }
       } else {
-        setProgress(100, 'Y Master Editor v2.0 applied! Workspace is completely updated.');
+        setProgress(100, 'Y Master Editor applied! Workspace is completely updated.');
         setTimeout(() => {
           window.closeUpdateModal();
         }, 1400);
@@ -3306,6 +4411,17 @@ async function init() {
   renderProjectDropdownList();
   setupMcpListener();
 
+  // Subscribe to instant zero-delay desktop releases via Firebase + GitHub
+  if (typeof window.subscribeToInstantDesktopRelease === 'function') {
+    window.subscribeToInstantDesktopRelease((version, notes) => {
+      console.log(`[Instant Desktop Release Trigger] v${version} available:`, notes);
+      if (btnConfirmUpdateLabel) {
+        btnConfirmUpdateLabel.textContent = `Update to v${version} Now`;
+      }
+      window.openUpdateModal();
+    });
+  }
+
   // Smooth startup auto-fit and responsive resize handling
   requestAnimationFrame(() => {
     if (typeof zoomFit === 'function') zoomFit();
@@ -3317,6 +4433,21 @@ async function init() {
     resizeTimer = setTimeout(() => {
       if (typeof updateAllPins === 'function') updateAllPins();
     }, 120);
+  });
+
+  // Global Keyboard Shortcuts (Escape to dismiss active modals)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const activeModals = document.querySelectorAll('.mcp-info-modal.active, .scoped-data-modal.active, .app-update-modal.active, .google-signin-modal.active, .code-drawer.open');
+      activeModals.forEach(m => m.classList.remove('active'));
+      document.querySelectorAll('.drawer-backdrop.active').forEach(b => b.classList.remove('active'));
+      const activePopover = document.getElementById('comment-popover');
+      if (activePopover) activePopover.classList.remove('active');
+      const projectDropdown = document.getElementById('project-menu-dropdown');
+      if (projectDropdown) projectDropdown.classList.remove('active');
+      const userDropdown = document.getElementById('user-profile-dropdown');
+      if (userDropdown) userDropdown.classList.remove('active');
+    }
   });
 }
 

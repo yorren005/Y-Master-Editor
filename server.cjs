@@ -10,6 +10,14 @@ const WS_PORT = 48721;
 const SRC_DIR = path.join(__dirname, 'src');
 const PROJECTS_FILE = path.join(__dirname, 'projects_store.json');
 
+// Clean up any stale temp worker files on server launch
+try {
+  const staleFiles = fs.readdirSync(__dirname).filter(f => f.startsWith('temp_pdf_') || f.startsWith('temp_pptx_'));
+  for (const f of staleFiles) {
+    try { fs.unlinkSync(path.join(__dirname, f)); } catch (_) {}
+  }
+} catch (_) {}
+
 const MIME_TYPES = {
   '.html': 'text/html; charset=UTF-8',
   '.css': 'text/css; charset=UTF-8',
@@ -77,7 +85,7 @@ try {
 function generatePdfViaHeadless(html, pageSize = 'A4', orientation = 'portrait', customWidthInches, customHeightInches) {
   return new Promise((resolve, reject) => {
     const electronBinary = require(path.join(__dirname, 'node_modules', 'electron'));
-    const tempWorker = path.join(__dirname, `temp_pdf_${Date.now()}.cjs`);
+    const tempWorker = path.join(__dirname, `temp_pdf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.cjs`);
 
     let pageSizeOption = JSON.stringify(pageSize);
     if (customWidthInches && customHeightInches) {
@@ -127,10 +135,20 @@ app.whenReady().then(async () => {
     proc.stdout.on('data', (d) => chunks.push(d));
     proc.stderr.on('data', (d) => errOutput += d.toString());
 
+    proc.on('error', (err) => {
+      try { fs.unlinkSync(tempWorker); } catch (_) {}
+      reject(err);
+    });
+
     proc.on('close', (code) => {
       try { fs.unlinkSync(tempWorker); } catch (_) {}
       if (code === 0) {
-        resolve(Buffer.concat(chunks));
+        let pdfBuf = Buffer.concat(chunks);
+        const headerIdx = pdfBuf.indexOf('%PDF-');
+        if (headerIdx > 0) {
+          pdfBuf = pdfBuf.subarray(headerIdx);
+        }
+        resolve(pdfBuf);
       } else {
         reject(new Error(errOutput || `Headless process exited with code ${code}`));
       }
@@ -143,7 +161,7 @@ function generatePptxViaHeadless(slidesHtmlArray, widthPx = 1920, heightPx = 108
   return new Promise(async (resolve, reject) => {
     try {
       const electronBinary = require(path.join(__dirname, 'node_modules', 'electron'));
-      const tempWorker = path.join(__dirname, `temp_pptx_${Date.now()}.cjs`);
+      const tempWorker = path.join(__dirname, `temp_pptx_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.cjs`);
 
       const code = `
 const { app, BrowserWindow } = require('electron');
@@ -190,6 +208,11 @@ app.whenReady().then(async () => {
       proc.stdout.on('data', (d) => jsonOut += d.toString());
       proc.stderr.on('data', (d) => errOutput += d.toString());
 
+      proc.on('error', (err) => {
+        try { fs.unlinkSync(tempWorker); } catch (_) {}
+        reject(err);
+      });
+
       proc.on('close', async (code) => {
         try { fs.unlinkSync(tempWorker); } catch (_) {}
         if (code !== 0 || !jsonOut) {
@@ -197,14 +220,17 @@ app.whenReady().then(async () => {
         }
 
         try {
-          const images = JSON.parse(jsonOut);
+          const startIdx = jsonOut.indexOf('[');
+          const endIdx = jsonOut.lastIndexOf(']');
+          const cleanJson = (startIdx !== -1 && endIdx !== -1) ? jsonOut.slice(startIdx, endIdx + 1) : jsonOut.trim();
+          const images = JSON.parse(cleanJson);
           const pptx = new PptxGenJS();
           
           // Layout sizing
           const aspect = widthPx / heightPx;
-          if (Math.abs(aspect - (16 / 9)) < 0.05) {
+          if (Math.abs(aspect - (16 / 9)) < 0.01) {
             pptx.layout = 'LAYOUT_16x9';
-          } else if (Math.abs(aspect - (4 / 3)) < 0.05) {
+          } else if (Math.abs(aspect - (4 / 3)) < 0.01) {
             pptx.layout = 'LAYOUT_4x3';
           } else {
             pptx.defineLayout({ name: 'CUSTOM', width: widthPx / 96, height: heightPx / 96 });
