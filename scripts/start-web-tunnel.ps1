@@ -29,14 +29,16 @@ if ($Port -eq 0 -and (Test-Path $PortFile)) {
 Write-Host "[Local Target] Routing traffic to http://127.0.0.1:$Port/mcp" -ForegroundColor Gray
 
 # 2. Check for Cloudflare Tunnel (cloudflared)
-$hasCloudflare = (Get-Command cloudflared -ErrorAction SilentlyContinue) -ne $null
+$localCf = Join-Path $PSScriptRoot "..\bin\cloudflared.exe"
+$hasCloudflare = (Test-Path $localCf) -or ((Get-Command cloudflared -ErrorAction SilentlyContinue) -ne $null)
+$cfBinary = if (Test-Path $localCf) { $localCf } else { "cloudflared" }
 $hasNgrok = (Get-Command ngrok -ErrorAction SilentlyContinue) -ne $null
 
 if ($hasCloudflare -and ($TunnelProvider -eq "auto" -or $TunnelProvider -eq "cloudflare")) {
     Write-Host "`n[Tunnel] Starting Cloudflare Quick Tunnel (Zero-config SSL)..." -ForegroundColor Green
     Write-Host "[Notice] A public https://*.trycloudflare.com URL will be generated below." -ForegroundColor Yellow
     Write-Host "-----------------------------------------------------------------" -ForegroundColor Gray
-    & cloudflared tunnel --url "http://127.0.0.1:$Port"
+    & $cfBinary tunnel --url "http://127.0.0.1:$Port"
 } elseif ($hasNgrok -and ($TunnelProvider -eq "auto" -or $TunnelProvider -eq "ngrok")) {
     Write-Host "`n[Tunnel] Starting ngrok Tunnel..." -ForegroundColor Green
     & ngrok http $Port
