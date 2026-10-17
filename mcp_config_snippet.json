@@ -1,7 +1,15 @@
 {
   "_comment": "Y Master Editor — Universal MCP Config. Copy the block for your provider.",
 
-  "stdio (Claude Desktop, Cursor, Windsurf, VS Code, Antigravity)": {
+  "http (Recommended Streamable HTTP for Antigravity, Cursor, Claude Desktop, Web Clients)": {
+    "mcpServers": {
+      "y-master-editor": {
+        "url": "http://127.0.0.1:48721/mcp"
+      }
+    }
+  },
+
+  "stdio (CLI & Offline fallback)": {
     "mcpServers": {
       "y-master-editor": {
         "command": "node",
@@ -12,15 +20,11 @@
     }
   },
 
-  "http (Any MCP-compatible client)": {
-    "mcpServers": {
-      "y-master-editor": {
-        "url": "http://localhost:48722/mcp"
-      }
-    }
-  },
-
-  "openai_gpt_actions_schema_url": "http://localhost:48722/api/v1/openapi.json",
-  "gemini_function_declarations_url": "http://localhost:48722/api/v1/gemini-tools",
-  "health_check_url": "http://localhost:48722/health"
+  "endpoints": {
+    "mcp_streamable_http_url": "http://127.0.0.1:48721/mcp",
+    "mcp_websocket_bridge_url": "ws://127.0.0.1:48721",
+    "openai_gpt_actions_schema_url": "http://127.0.0.1:48721/api/v1/openapi.json",
+    "gemini_function_declarations_url": "http://127.0.0.1:48721/api/v1/gemini-tools",
+    "health_check_url": "http://127.0.0.1:48721/health"
+  }
 }

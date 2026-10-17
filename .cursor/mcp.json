@@ -1,10 +1,7 @@
 {
   "mcpServers": {
     "y-master-editor": {
-      "command": "node",
-      "args": [
-        "Y:\\github repositories\\Y-Master-Editor\\electron\\mcp-server.cjs"
-      ]
+      "url": "http://127.0.0.1:48721/mcp"
     }
   }
 }

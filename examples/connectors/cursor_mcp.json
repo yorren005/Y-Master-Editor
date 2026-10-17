@@ -1,10 +1,7 @@
 {
   "mcpServers": {
     "y-master-editor": {
-      "url": "http://127.0.0.1:48722/mcp",
-      "headers": {
-        "Authorization": "Bearer ymaster_mcp_default_token"
-      }
+      "url": "http://127.0.0.1:48721/mcp"
     }
   }
 }

@@ -8,6 +8,7 @@
     "start": "electron .",
     "serve": "node server.cjs",
     "mcp": "node electron/mcp-server.cjs",
+    "mcp:http": "node electron/web-mcp-gateway.cjs",
     "test": "node test/engine-test.cjs && node test/pdf-adapter-test.cjs && node test/e2e-mcp-integration-test.cjs && node test/import-pipeline-test.cjs && node test/omni-auth-telemetry-test.cjs",
     "build:icon": "powershell -ExecutionPolicy Bypass -File scripts/create-icon.ps1",
     "pack": "electron-builder --dir",

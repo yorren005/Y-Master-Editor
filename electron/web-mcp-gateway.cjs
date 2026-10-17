@@ -428,3 +428,21 @@ class WebMcpGateway {
 module.exports = {
   WebMcpGateway
 };
+
+// Standalone execution support
+if (require.main === module) {
+  const { TransactionManager } = require('../src/engine/transaction-manager.cjs');
+  const mcpStatePath = path.join(__dirname, '..', 'document_state.json');
+  const tm = new TransactionManager(mcpStatePath);
+  const port = parseInt(process.env.MCP_PORT || '48721', 10);
+  const gateway = new WebMcpGateway({
+    transactionManager: tm,
+    port
+  });
+  gateway.listen(port).then((actualPort) => {
+    console.log(`[Standalone Web MCP Gateway] 🚀 Live at http://127.0.0.1:${actualPort}/mcp`);
+  }).catch((err) => {
+    console.error('[Web MCP Gateway Error]', err);
+    process.exit(1);
+  });
+}
