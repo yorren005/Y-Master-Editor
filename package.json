@@ -42,7 +42,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yogeshwarren005-boop/Y-Master-Editor.git"
+    "url": "https://github.com/yorren005/Y-Master-Editor.git"
   },
   "build": {
     "appId": "com.independent.desktopapp",
@@ -50,7 +50,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "yogeshwarren005-boop",
+        "owner": "yorren005",
         "repo": "Y-Master-Editor",
         "releaseType": "release"
       }
