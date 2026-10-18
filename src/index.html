@@ -459,6 +459,37 @@
         </div>
       </div>
 
+      <!-- Universal Permanent URL & Custom Domain Configuration -->
+      <div class="mcp-custom-domain-card" style="margin-top: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--color-border); border-radius: 8px; padding: 12px 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" id="toggle-named-tunnel-section">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            <span style="font-size: 11px; font-weight: 700; color: var(--color-wheat-light); text-transform: uppercase; letter-spacing: 0.05em;">Universal Permanent URL (Named Tunnel / Custom Domain)</span>
+            <span id="mcp-tunnel-mode-badge" style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-weight: 600;">Quick Tunnel Mode</span>
+          </div>
+          <span id="named-tunnel-toggle-icon" style="color: var(--color-sand); font-size: 11px;">▼</span>
+        </div>
+        <div id="named-tunnel-config-panel" style="display: none; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--color-border);">
+          <p style="font-size: 11px; color: var(--color-sand); margin: 0 0 10px 0; line-height: 1.45;">
+            By default, Cloudflare assigns a temporary random subdomain on <code>trycloudflare.com</code>. To set a permanent universal URL with the app name (e.g. <code>https://y-master-editor.yourdomain.com</code>), enter your Cloudflare Zero Trust Named Tunnel Token below.
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+              <label style="display: block; font-size: 10px; font-weight: 700; color: var(--color-sand); margin-bottom: 4px; text-transform: uppercase;">Custom Domain URL</label>
+              <input type="text" id="input-tunnel-domain" placeholder="https://y-master-editor.yourdomain.com" class="modal-input-clean" style="width: 100%; height: 32px; font-size: 11px;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 10px; font-weight: 700; color: var(--color-sand); margin-bottom: 4px; text-transform: uppercase;">Cloudflare Tunnel Token</label>
+              <input type="password" id="input-tunnel-token" placeholder="eyJhIjoi..." class="modal-input-clean" style="width: 100%; height: 32px; font-size: 11px;">
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+            <button id="btn-clear-tunnel-config" class="btn-secondary" style="height: 28px; padding: 0 12px; font-size: 11px;">Reset to Quick Tunnel</button>
+            <button id="btn-save-tunnel-config" class="btn-primary" style="height: 28px; padding: 0 14px; font-size: 11px; font-weight: 600;">Save &amp; Bind Permanent URL</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Agent Capabilities Grid (All 9 Tools) -->
       <div style="margin-top: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">

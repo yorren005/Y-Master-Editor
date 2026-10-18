@@ -46,6 +46,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // MCP Gateway & Public Tunnel Status
   getMcpStatus: () => ipcRenderer.invoke('mcp:get-status'),
+  getMcpTunnelConfig: () => ipcRenderer.invoke('mcp:get-tunnel-config'),
+  saveMcpTunnelConfig: (data) => ipcRenderer.invoke('mcp:save-tunnel-config', data),
   restartMcpTunnel: () => ipcRenderer.invoke('mcp:restart-tunnel'),
   onMcpTunnelStatus: (callback) => {
     ipcRenderer.on('mcp:tunnel-status', (_event, data) => callback(data));

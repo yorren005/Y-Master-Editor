@@ -7,6 +7,7 @@ dist/
 Thumbs.db
 .mcp-port.json
 .mcp-tunnel.json
+.mcp-tunnel-config.json
 stderr.txt
 stdout.txt
 test_lock.cjs

@@ -28,7 +28,40 @@ class TunnelManager extends EventEmitter {
   }
 
   /**
-   * Start the Cloudflare HTTPS Tunnel
+   * Load Named Tunnel configuration from .mcp-tunnel-config.json or environment variables
+   * @returns {{ token: string|null, domain: string|null }}
+   */
+  loadNamedTunnelConfig() {
+    const configPath = path.join(__dirname, '..', '.mcp-tunnel-config.json');
+    let token = process.env.MCP_CLOUDFLARE_TOKEN || process.env.CLOUDFLARE_TUNNEL_TOKEN || null;
+    let domain = process.env.MCP_CUSTOM_DOMAIN || null;
+
+    if (fs.existsSync(configPath)) {
+      try {
+        const raw = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        if (raw.token && typeof raw.token === 'string' && raw.token.trim()) {
+          token = raw.token.trim();
+        }
+        if (raw.domain && typeof raw.domain === 'string' && raw.domain.trim()) {
+          domain = raw.domain.trim();
+        }
+      } catch (e) {
+        console.warn('[TunnelManager] Failed to read .mcp-tunnel-config.json:', e.message);
+      }
+    }
+
+    if (domain && !domain.startsWith('http://') && !domain.startsWith('https://')) {
+      domain = `https://${domain}`;
+    }
+    if (domain) {
+      domain = domain.replace(/\/+$/, '');
+    }
+
+    return { token, domain };
+  }
+
+  /**
+   * Start the Cloudflare HTTPS Tunnel (Named Tunnel or Quick Tunnel)
    * @param {number} [localPort]
    * @returns {Promise<string>} Resolves with the public HTTPS URL
    */
@@ -63,9 +96,18 @@ class TunnelManager extends EventEmitter {
         return reject(err);
       }
 
-      console.error(`[TunnelManager] Spawning Cloudflare tunnel for http://127.0.0.1:${this.localPort}`);
+      const namedConfig = this.loadNamedTunnelConfig();
+      const isNamedTunnel = Boolean(namedConfig.token);
 
-      const args = ['tunnel', '--url', `http://127.0.0.1:${this.localPort}`];
+      let args;
+      if (isNamedTunnel) {
+        console.error(`[TunnelManager] 🔐 Spawning Cloudflare Named Tunnel (Zero Trust) with persistent domain: ${namedConfig.domain || 'custom-domain'}`);
+        args = ['tunnel', 'run', '--token', namedConfig.token];
+      } else {
+        console.error(`[TunnelManager] Spawning Cloudflare Quick Tunnel for http://127.0.0.1:${this.localPort}`);
+        args = ['tunnel', '--url', `http://127.0.0.1:${this.localPort}`];
+      }
+
       this.tunnelProcess = spawn(this.binPath, args, {
         stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true
@@ -75,28 +117,51 @@ class TunnelManager extends EventEmitter {
 
       const handleOutput = (chunk) => {
         const text = chunk.toString();
-        const match = text.match(urlRegex);
 
-        if (match && !resolved) {
-          resolved = true;
-          clearTimeout(timeoutTimer);
-          this.publicUrl = match[0];
-          this.status = 'online';
-          this.reconnectAttempts = 0;
+        if (isNamedTunnel) {
+          const registered = /Registered tunnel connection|Connection [a-f0-9-]+ registered|Route propagation done|Starting metrics server/i.test(text);
+          if (registered && !resolved) {
+            resolved = true;
+            clearTimeout(timeoutTimer);
+            this.publicUrl = namedConfig.domain || 'https://y-master-editor.cloud';
+            this.status = 'online';
+            this.reconnectAttempts = 0;
+            this.saveTunnelState();
+            console.error(`[TunnelManager] 🚀 Live Cloudflare Named Tunnel: ${this.publicUrl}`);
+            this.emit('status', {
+              status: this.status,
+              publicUrl: this.publicUrl,
+              localPort: this.localPort,
+              mode: 'named'
+            });
+            this.emit('url', this.publicUrl);
+            this.startHealthCheck();
+            resolve(this.publicUrl);
+          }
+        } else {
+          const match = text.match(urlRegex);
+          if (match && !resolved) {
+            resolved = true;
+            clearTimeout(timeoutTimer);
+            this.publicUrl = match[0];
+            this.status = 'online';
+            this.reconnectAttempts = 0;
 
-          // Save state to .mcp-tunnel.json for UI & scripts
-          this.saveTunnelState();
+            // Save state to .mcp-tunnel.json for UI & scripts
+            this.saveTunnelState();
 
-          console.error(`[TunnelManager] 🚀 Live Public HTTPS Tunnel: ${this.publicUrl}`);
-          this.emit('status', {
-            status: this.status,
-            publicUrl: this.publicUrl,
-            localPort: this.localPort
-          });
-          this.emit('url', this.publicUrl);
+            console.error(`[TunnelManager] 🚀 Live Public HTTPS Tunnel: ${this.publicUrl}`);
+            this.emit('status', {
+              status: this.status,
+              publicUrl: this.publicUrl,
+              localPort: this.localPort,
+              mode: 'quick'
+            });
+            this.emit('url', this.publicUrl);
 
-          this.startHealthCheck();
-          resolve(this.publicUrl);
+            this.startHealthCheck();
+            resolve(this.publicUrl);
+          }
         }
 
         // Detect server side revocation or tunnel closure
@@ -107,6 +172,30 @@ class TunnelManager extends EventEmitter {
           }
         }
       };
+
+      if (isNamedTunnel) {
+        // Fallback resolution for Named Tunnels if logs are silent but process stays alive
+        setTimeout(() => {
+          if (!resolved && this.tunnelProcess && !this.isStopping) {
+            resolved = true;
+            clearTimeout(timeoutTimer);
+            this.publicUrl = namedConfig.domain || 'https://y-master-editor.cloud';
+            this.status = 'online';
+            this.reconnectAttempts = 0;
+            this.saveTunnelState();
+            console.error(`[TunnelManager] 🚀 Live Cloudflare Named Tunnel (Active): ${this.publicUrl}`);
+            this.emit('status', {
+              status: this.status,
+              publicUrl: this.publicUrl,
+              localPort: this.localPort,
+              mode: 'named'
+            });
+            this.emit('url', this.publicUrl);
+            this.startHealthCheck();
+            resolve(this.publicUrl);
+          }
+        }, 3500);
+      }
 
       this.tunnelProcess.stdout.on('data', handleOutput);
       this.tunnelProcess.stderr.on('data', handleOutput);
@@ -234,12 +323,16 @@ class TunnelManager extends EventEmitter {
   }
 
   getInfo() {
+    const config = this.loadNamedTunnelConfig();
     return {
       status: this.status,
       publicUrl: this.publicUrl,
       mcpUrl: this.publicUrl ? `${this.publicUrl}/mcp` : null,
       sseUrl: this.publicUrl ? `${this.publicUrl}/sse` : null,
-      localPort: this.localPort
+      localPort: this.localPort,
+      mode: config.token ? 'named' : 'quick',
+      customDomain: config.domain || null,
+      hasNamedToken: Boolean(config.token)
     };
   }
 }

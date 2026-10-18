@@ -290,15 +290,53 @@ function startWsBridge(port = DEFAULT_PORT) {
 // IPC Handlers: MCP Gateway & Tunnel Status for in-app UI
 ipcMain.handle('mcp:get-status', async () => {
   const actualPort = activeGateway ? activeGateway.actualPort : DEFAULT_PORT;
+  const info = activeTunnel ? activeTunnel.getInfo() : {};
   return {
     localPort: actualPort,
     localSseUrl: `http://127.0.0.1:${actualPort}/sse`,
     localMcpUrl: `http://127.0.0.1:${actualPort}/mcp`,
-    publicUrl: activeTunnel ? activeTunnel.publicUrl : null,
-    publicSseUrl: activeTunnel && activeTunnel.publicUrl ? `${activeTunnel.publicUrl}/sse` : null,
-    publicMcpUrl: activeTunnel && activeTunnel.publicUrl ? `${activeTunnel.publicUrl}/mcp` : null,
-    tunnelStatus: activeTunnel ? activeTunnel.status : 'offline'
+    publicUrl: info.publicUrl || null,
+    publicSseUrl: info.publicUrl ? `${info.publicUrl}/sse` : null,
+    publicMcpUrl: info.publicUrl ? `${info.publicUrl}/mcp` : null,
+    tunnelStatus: info.status || 'offline',
+    tunnelMode: info.mode || 'quick',
+    customDomain: info.customDomain || null,
+    hasNamedToken: Boolean(info.hasNamedToken)
   };
+});
+
+ipcMain.handle('mcp:get-tunnel-config', async () => {
+  if (!activeTunnel) return { token: '', domain: '' };
+  const cfg = activeTunnel.loadNamedTunnelConfig();
+  return {
+    domain: cfg.domain || '',
+    hasToken: Boolean(cfg.token)
+  };
+});
+
+ipcMain.handle('mcp:save-tunnel-config', async (_event, { token, domain }) => {
+  const configPath = path.join(__dirname, '..', '.mcp-tunnel-config.json');
+  try {
+    let currentToken = '';
+    if (activeTunnel) {
+      currentToken = activeTunnel.loadNamedTunnelConfig().token || '';
+    }
+    const finalToken = (token && token.trim() && !token.includes('••••')) ? token.trim() : (token === '' ? '' : currentToken);
+    const finalDomain = (domain && domain.trim()) ? domain.trim() : '';
+
+    const data = {
+      token: finalToken,
+      domain: finalDomain
+    };
+    fs.writeFileSync(configPath, JSON.stringify(data, null, 2));
+
+    if (activeTunnel && activeGateway) {
+      await activeTunnel.start(activeGateway.actualPort);
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 });
 
 ipcMain.handle('mcp:restart-tunnel', async () => {

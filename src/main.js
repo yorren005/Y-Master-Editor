@@ -3920,6 +3920,14 @@ function bindEvents() {
   const mcpLocalSseCode = document.getElementById('mcp-local-sse-code');
   const btnCopyLocalSse = document.getElementById('btn-copy-local-sse');
   const btnCopyCmd = document.getElementById('btn-copy-cmd');
+  const toggleNamedTunnelSection = document.getElementById('toggle-named-tunnel-section');
+  const namedTunnelConfigPanel = document.getElementById('named-tunnel-config-panel');
+  const namedTunnelToggleIcon = document.getElementById('named-tunnel-toggle-icon');
+  const mcpTunnelModeBadge = document.getElementById('mcp-tunnel-mode-badge');
+  const inputTunnelDomain = document.getElementById('input-tunnel-domain');
+  const inputTunnelToken = document.getElementById('input-tunnel-token');
+  const btnSaveTunnelConfig = document.getElementById('btn-save-tunnel-config');
+  const btnClearTunnelConfig = document.getElementById('btn-clear-tunnel-config');
 
   let currentMcpState = {
     localPort: 48721,
@@ -3928,7 +3936,10 @@ function bindEvents() {
     publicUrl: null,
     publicSseUrl: null,
     publicMcpUrl: null,
-    tunnelStatus: 'starting'
+    tunnelStatus: 'starting',
+    tunnelMode: 'quick',
+    customDomain: null,
+    hasNamedToken: false
   };
 
   const MCP_CONFIGS = {};
@@ -3978,7 +3989,8 @@ function bindEvents() {
     }
     if (mcpTunnelStatusText) {
       if (currentMcpState.tunnelStatus === 'online') {
-        mcpTunnelStatusText.textContent = 'Public HTTPS Tunnel: Active';
+        const modeLabel = currentMcpState.tunnelMode === 'named' ? 'Named Tunnel (Permanent)' : 'Quick Tunnel (Active)';
+        mcpTunnelStatusText.textContent = `Public HTTPS: ${modeLabel}`;
         mcpTunnelStatusText.style.color = '#10b981';
       } else if (currentMcpState.tunnelStatus === 'starting' || currentMcpState.tunnelStatus === 'reconnecting') {
         mcpTunnelStatusText.textContent = 'Public Tunnel: Connecting...';
@@ -3986,6 +3998,18 @@ function bindEvents() {
       } else {
         mcpTunnelStatusText.textContent = 'Public Tunnel: Stopped';
         mcpTunnelStatusText.style.color = '#ef4444';
+      }
+    }
+
+    if (mcpTunnelModeBadge) {
+      if (currentMcpState.tunnelMode === 'named') {
+        mcpTunnelModeBadge.textContent = 'Permanent Named Tunnel (Active)';
+        mcpTunnelModeBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+        mcpTunnelModeBadge.style.color = '#34d399';
+      } else {
+        mcpTunnelModeBadge.textContent = 'Quick Tunnel Mode (Temporary)';
+        mcpTunnelModeBadge.style.background = 'rgba(59, 130, 246, 0.15)';
+        mcpTunnelModeBadge.style.color = '#60a5fa';
       }
     }
 
@@ -4109,6 +4133,19 @@ function bindEvents() {
         console.warn('Failed to query MCP status:', err);
       }
     }
+    if (window.electronAPI && typeof window.electronAPI.getMcpTunnelConfig === 'function') {
+      try {
+        const cfg = await window.electronAPI.getMcpTunnelConfig();
+        if (cfg) {
+          if (inputTunnelDomain && cfg.domain && !inputTunnelDomain.value) {
+            inputTunnelDomain.value = cfg.domain;
+          }
+          if (inputTunnelToken && cfg.hasToken && !inputTunnelToken.value) {
+            inputTunnelToken.value = '••••••••••••••••••••';
+          }
+        }
+      } catch (_) {}
+    }
   };
 
   if (window.electronAPI && typeof window.electronAPI.onMcpTunnelStatus === 'function') {
@@ -4121,6 +4158,7 @@ function bindEvents() {
         }
         if (statusData.status) currentMcpState.tunnelStatus = statusData.status;
         if (statusData.localPort) currentMcpState.localPort = statusData.localPort;
+        if (statusData.mode) currentMcpState.tunnelMode = statusData.mode;
         updateMcpConfigsFromState();
       }
     });
@@ -4214,6 +4252,67 @@ function bindEvents() {
         btnRestartTunnel.textContent = '🔄';
         refreshMcpStatus();
       }, 3000);
+    });
+  }
+
+  if (toggleNamedTunnelSection && namedTunnelConfigPanel) {
+    toggleNamedTunnelSection.addEventListener('click', () => {
+      const isVisible = namedTunnelConfigPanel.style.display === 'block';
+      namedTunnelConfigPanel.style.display = isVisible ? 'none' : 'block';
+      if (namedTunnelToggleIcon) {
+        namedTunnelToggleIcon.textContent = isVisible ? '▼' : '▲';
+      }
+    });
+  }
+
+  if (btnSaveTunnelConfig) {
+    btnSaveTunnelConfig.addEventListener('click', async () => {
+      const domain = inputTunnelDomain ? inputTunnelDomain.value.trim() : '';
+      const token = inputTunnelToken ? inputTunnelToken.value.trim() : '';
+      btnSaveTunnelConfig.textContent = 'Saving & Binding...';
+      btnSaveTunnelConfig.disabled = true;
+
+      try {
+        if (window.electronAPI && typeof window.electronAPI.saveMcpTunnelConfig === 'function') {
+          const res = await window.electronAPI.saveMcpTunnelConfig({ token, domain });
+          if (res && res.success) {
+            btnSaveTunnelConfig.textContent = '✓ Saved & Connected!';
+            setTimeout(() => {
+              btnSaveTunnelConfig.textContent = 'Save & Bind Permanent URL';
+              btnSaveTunnelConfig.disabled = false;
+              refreshMcpStatus();
+            }, 1800);
+          } else {
+            alert('Failed to save tunnel config: ' + (res?.error || 'Unknown error'));
+            btnSaveTunnelConfig.textContent = 'Save & Bind Permanent URL';
+            btnSaveTunnelConfig.disabled = false;
+          }
+        }
+      } catch (e) {
+        alert('Error saving configuration: ' + e.message);
+        btnSaveTunnelConfig.textContent = 'Save & Bind Permanent URL';
+        btnSaveTunnelConfig.disabled = false;
+      }
+    });
+  }
+
+  if (btnClearTunnelConfig) {
+    btnClearTunnelConfig.addEventListener('click', async () => {
+      if (inputTunnelDomain) inputTunnelDomain.value = '';
+      if (inputTunnelToken) inputTunnelToken.value = '';
+      btnClearTunnelConfig.textContent = 'Resetting...';
+      try {
+        if (window.electronAPI && typeof window.electronAPI.saveMcpTunnelConfig === 'function') {
+          await window.electronAPI.saveMcpTunnelConfig({ token: '', domain: '' });
+          btnClearTunnelConfig.textContent = '✓ Reset to Quick Tunnel';
+          setTimeout(() => {
+            btnClearTunnelConfig.textContent = 'Reset to Quick Tunnel';
+            refreshMcpStatus();
+          }, 1500);
+        }
+      } catch (e) {
+        btnClearTunnelConfig.textContent = 'Reset to Quick Tunnel';
+      }
     });
   }
 
