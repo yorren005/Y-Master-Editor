@@ -195,9 +195,11 @@ try {
 }
 
 const { WebMcpGateway } = require('./web-mcp-gateway.cjs');
+const { TunnelManager } = require('./tunnel-manager.cjs');
 let activeGateway = null;
+let activeTunnel = null;
 
-// Start local Dual WebSocket + Multi-Session Streamable HTTP MCP bridge with full EADDRINUSE resilience
+// Start local Dual WebSocket + Multi-Session Streamable HTTP & SSE MCP bridge
 function startWsBridge(port = DEFAULT_PORT) {
   try {
     activeGateway = new WebMcpGateway({
@@ -259,7 +261,24 @@ function startWsBridge(port = DEFAULT_PORT) {
         });
       });
 
-      console.log(`[Unified Server] Live on http://127.0.0.1:${actualPort} (WebSocket bridge + Streamable HTTP MCP at /mcp + OpenAPI at /api/v1/openapi.json)`);
+      console.log(`[Unified Server] Live on http://127.0.0.1:${actualPort} (WebSocket bridge + Claude SSE at /sse + Streamable HTTP at /mcp + OpenAPI at /api/v1/openapi.json)`);
+
+      // Automatically initialize and launch native Cloudflare HTTPS tunnel for Claude Custom Connector
+      try {
+        if (!activeTunnel) {
+          activeTunnel = new TunnelManager({ localPort: actualPort });
+          activeTunnel.on('status', (data) => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('mcp:tunnel-status', data);
+            }
+          });
+          activeTunnel.start().catch((err) => {
+            console.warn('[TunnelManager Auto-Start Warning]:', err.message);
+          });
+        }
+      } catch (err) {
+        console.warn('[TunnelManager Init Error]:', err.message);
+      }
     }).catch((err) => {
       console.error('[WS Bridge Init Error]', err);
     });
@@ -267,6 +286,32 @@ function startWsBridge(port = DEFAULT_PORT) {
     console.error('[WS Bridge Init Error]', err);
   }
 }
+
+// IPC Handlers: MCP Gateway & Tunnel Status for in-app UI
+ipcMain.handle('mcp:get-status', async () => {
+  const actualPort = activeGateway ? activeGateway.actualPort : DEFAULT_PORT;
+  return {
+    localPort: actualPort,
+    localSseUrl: `http://127.0.0.1:${actualPort}/sse`,
+    localMcpUrl: `http://127.0.0.1:${actualPort}/mcp`,
+    publicUrl: activeTunnel ? activeTunnel.publicUrl : null,
+    publicSseUrl: activeTunnel && activeTunnel.publicUrl ? `${activeTunnel.publicUrl}/sse` : null,
+    publicMcpUrl: activeTunnel && activeTunnel.publicUrl ? `${activeTunnel.publicUrl}/mcp` : null,
+    tunnelStatus: activeTunnel ? activeTunnel.status : 'offline'
+  };
+});
+
+ipcMain.handle('mcp:restart-tunnel', async () => {
+  if (activeTunnel && activeGateway) {
+    try {
+      const url = await activeTunnel.start(activeGateway.actualPort);
+      return { success: true, url };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }
+  return { success: false, error: 'Tunnel manager not initialized' };
+});
 
 // Broadcast message from renderer to connected MCP clients
 function broadcastToMcp(payload) {
@@ -805,4 +850,13 @@ if (!gotTheLock) {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('will-quit', () => {
+  if (activeTunnel) {
+    try { activeTunnel.stop(); } catch (_) {}
+  }
+  if (activeGateway) {
+    try { activeGateway.close(); } catch (_) {}
+  }
 });

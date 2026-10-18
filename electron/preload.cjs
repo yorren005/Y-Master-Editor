@@ -44,6 +44,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   authorizeInstruction: (opts) => ipcRenderer.invoke('authorize-instruction', opts),
   openDocumentDialog: (opts) => ipcRenderer.invoke('open-document-dialog', opts),
 
+  // MCP Gateway & Public Tunnel Status
+  getMcpStatus: () => ipcRenderer.invoke('mcp:get-status'),
+  restartMcpTunnel: () => ipcRenderer.invoke('mcp:restart-tunnel'),
+  onMcpTunnelStatus: (callback) => {
+    ipcRenderer.on('mcp:tunnel-status', (_event, data) => callback(data));
+  },
+
   // Realtime Firebase Release Trigger
   onDesktopRelease: (callback) => ipcRenderer.on('firebase:desktop-release', (_event, data) => callback(data))
 });

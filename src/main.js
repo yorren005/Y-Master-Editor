@@ -3909,94 +3909,30 @@ function bindEvents() {
   const mcpTabTitle = document.getElementById('mcp-config-tab-title');
   const mcpInstruction = document.getElementById('mcp-provider-instruction');
   const mcpTabsNav = document.getElementById('mcp-tabs-nav');
+  const mcpGatewayStatusText = document.getElementById('mcp-gateway-status-text');
+  const mcpTunnelStatusText = document.getElementById('mcp-tunnel-status-text');
+  const mcpTunnelDot = document.getElementById('mcp-tunnel-dot');
+  const btnRestartTunnel = document.getElementById('btn-restart-tunnel');
+  const mcpClaudeUrlCode = document.getElementById('mcp-claude-url-code');
+  const btnCopyClaudeUrl = document.getElementById('btn-copy-claude-url');
+  const mcpGeminiUrlCode = document.getElementById('mcp-gemini-url-code');
   const btnCopyGeminiUrl = document.getElementById('btn-copy-gemini-url');
-  const btnCopyUrl = document.getElementById('btn-copy-url');
+  const mcpLocalSseCode = document.getElementById('mcp-local-sse-code');
+  const btnCopyLocalSse = document.getElementById('btn-copy-local-sse');
   const btnCopyCmd = document.getElementById('btn-copy-cmd');
 
-  const MCP_CONFIGS = {
-    gemini: {
-      title: 'Google Gemini Connected Apps (HTTPS Endpoint)',
-      buttonLabel: 'Copy Gemini HTTPS URL',
-      instruction: 'In <strong>Gemini &gt; Settings &gt; Connected Apps &gt; Add MCP Server</strong>, enter Server Name: <code>Y-Master-Editor</code> and paste the public HTTPS URL below.',
-      snippet: JSON.stringify({
-        name: "Y-Master-Editor",
-        description: "Standard Document Editor & Canvas Operations MCP Server",
-        url: "https://preserve-gilbert-lyrics-simple.trycloudflare.com/mcp",
-        transport: "streamable_http",
-        capabilities: {
-          tools: [
-            "get_document_outline",
-            "get_selection_context",
-            "get_pending_instructions",
-            "authorize_instruction",
-            "propose_component_change",
-            "propose_region_replacement",
-            "update_page_content",
-            "add_page",
-            "rollback_transaction"
-          ]
-        }
-      }, null, 2)
-    },
-    claude: {
-      title: 'claude_desktop_config.json',
-      buttonLabel: 'Copy Claude Config',
-      instruction: 'Paste into your <code>claude_desktop_config.json</code> under <code>mcpServers</code> and restart Claude Desktop or Claude Code.',
-      snippet: JSON.stringify({
-        mcpServers: {
-          "y-master-editor": {
-            command: "node",
-            args: [
-              "Y:\\github repositories\\Y-Master-Editor\\electron\\mcp-server.cjs"
-            ]
-          }
-        }
-      }, null, 2)
-    },
-    openai: {
-      title: 'OpenAI Agent / ChatGPT Actions Endpoint',
-      buttonLabel: 'Copy OpenAI SSE Endpoint',
-      instruction: 'Connect your OpenAI Assistant or custom GPT agent directly via Streamable HTTP / SSE. Zero installation needed.',
-      snippet: JSON.stringify({
-        type: "mcp",
-        name: "y-master-editor",
-        server_url: "http://127.0.0.1:48721/mcp",
-        transport: "streamable_http"
-      }, null, 2)
-    },
-    cursor: {
-      title: 'Cursor Features → MCP Settings',
-      buttonLabel: 'Copy Cursor MCP Config',
-      instruction: 'Add under <strong>Cursor Settings &gt; Features &gt; MCP</strong>. Select Type <em>command</em> or <em>sse</em>.',
-      snippet: JSON.stringify({
-        mcpServers: {
-          "y-master-editor": {
-            command: "node",
-            args: [
-              "Y:\\github repositories\\Y-Master-Editor\\electron\\mcp-server.cjs"
-            ]
-          }
-        }
-      }, null, 2)
-    },
-    vscode: {
-      title: '.vscode/settings.json or Windsurf',
-      buttonLabel: 'Copy VS Code Config',
-      instruction: 'Add to your VS Code <code>settings.json</code> or Windsurf Cascade MCP settings configuration.',
-      snippet: JSON.stringify({
-        mcpServers: {
-          "y-master-editor": {
-            command: "node",
-            args: [
-              "Y:\\github repositories\\Y-Master-Editor\\electron\\mcp-server.cjs"
-            ]
-          }
-        }
-      }, null, 2)
-    }
+  let currentMcpState = {
+    localPort: 48721,
+    localSseUrl: 'http://127.0.0.1:48721/sse',
+    localMcpUrl: 'http://127.0.0.1:48721/mcp',
+    publicUrl: null,
+    publicSseUrl: null,
+    publicMcpUrl: null,
+    tunnelStatus: 'starting'
   };
 
-  let activeMcpProvider = 'gemini';
+  const MCP_CONFIGS = {};
+  let activeMcpProvider = 'claude-custom';
 
   const highlightJson = (code) => {
     return code
@@ -4017,6 +3953,116 @@ function bindEvents() {
     if (mcpSnippet) {
       mcpSnippet.innerHTML = highlightJson(data.snippet);
     }
+  };
+
+  const updateMcpConfigsFromState = () => {
+    const publicBase = currentMcpState.publicUrl || 'https://<generating-tunnel>.trycloudflare.com';
+    const publicSse = currentMcpState.publicSseUrl || `${publicBase}/sse`;
+    const publicMcp = currentMcpState.publicMcpUrl || `${publicBase}/mcp`;
+    const localSse = currentMcpState.localSseUrl || `http://127.0.0.1:${currentMcpState.localPort}/sse`;
+
+    // Update Quick-Copy strip elements
+    if (mcpClaudeUrlCode) {
+      mcpClaudeUrlCode.textContent = currentMcpState.publicSseUrl || (currentMcpState.tunnelStatus === 'starting' ? 'Generating live HTTPS tunnel...' : 'Tunnel offline');
+    }
+    if (mcpGeminiUrlCode) {
+      mcpGeminiUrlCode.textContent = currentMcpState.publicMcpUrl || (currentMcpState.tunnelStatus === 'starting' ? 'Generating live HTTPS tunnel...' : 'Tunnel offline');
+    }
+    if (mcpLocalSseCode) {
+      mcpLocalSseCode.textContent = localSse;
+    }
+
+    // Update status indicators
+    if (mcpGatewayStatusText) {
+      mcpGatewayStatusText.textContent = `MCP Gateway: Port ${currentMcpState.localPort} (Claude SSE & Streamable HTTP)`;
+    }
+    if (mcpTunnelStatusText) {
+      if (currentMcpState.tunnelStatus === 'online') {
+        mcpTunnelStatusText.textContent = 'Public HTTPS Tunnel: Active';
+        mcpTunnelStatusText.style.color = '#10b981';
+      } else if (currentMcpState.tunnelStatus === 'starting' || currentMcpState.tunnelStatus === 'reconnecting') {
+        mcpTunnelStatusText.textContent = 'Public Tunnel: Connecting...';
+        mcpTunnelStatusText.style.color = '#f59e0b';
+      } else {
+        mcpTunnelStatusText.textContent = 'Public Tunnel: Stopped';
+        mcpTunnelStatusText.style.color = '#ef4444';
+      }
+    }
+
+    // Update MCP_CONFIGS snippets with actual live URLs
+    MCP_CONFIGS['claude-custom'] = {
+      title: 'Claude Custom Connector (claude.ai / Remote)',
+      buttonLabel: 'Copy Claude Connector URL',
+      instruction: 'In <strong>Claude.ai &gt; Settings &gt; Connectors &gt; Add custom connector</strong>, enter Name: <code>Y-Master-Editor</code>, paste the live URL below, and select <strong>"No sign in"</strong> under Authentication.',
+      snippet: JSON.stringify({
+        name: "Y-Master-Editor",
+        description: "Y Master Editor Precision Vector Studio MCP Server",
+        url: publicSse,
+        transport: "sse",
+        authentication: "none",
+        tools: [
+          "get_document_outline",
+          "get_selection_context",
+          "get_pending_instructions",
+          "authorize_instruction",
+          "propose_component_change",
+          "propose_region_replacement",
+          "update_page_content",
+          "add_page",
+          "rollback_transaction"
+        ]
+      }, null, 2)
+    };
+
+    MCP_CONFIGS['claude-desktop'] = {
+      title: 'claude_desktop_config.json (Local Integration)',
+      buttonLabel: 'Copy Claude Desktop Config',
+      instruction: 'Paste into your <code>claude_desktop_config.json</code> under <code>mcpServers</code>. Connects directly to local SSE without any path or node dependencies.',
+      snippet: JSON.stringify({
+        mcpServers: {
+          "y-master-editor": {
+            url: localSse
+          }
+        }
+      }, null, 2)
+    };
+
+    MCP_CONFIGS['gemini'] = {
+      title: 'Google Gemini Connected Apps (HTTPS Endpoint)',
+      buttonLabel: 'Copy Gemini HTTPS URL',
+      instruction: 'In <strong>Gemini &gt; Settings &gt; Connected Apps &gt; Add MCP Server</strong>, enter Server Name: <code>Y-Master-Editor</code> and paste the public HTTPS URL below.',
+      snippet: JSON.stringify({
+        name: "Y-Master-Editor",
+        description: "Standard Document Editor & Canvas Operations MCP Server",
+        url: publicMcp,
+        transport: "streamable_http"
+      }, null, 2)
+    };
+
+    MCP_CONFIGS['openai'] = {
+      title: 'OpenAI Agent / ChatGPT Custom GPT Actions',
+      buttonLabel: 'Copy OpenAPI Schema URL',
+      instruction: 'Import into your Custom GPT Actions directly via the live OpenAPI 3.1 specification schema.',
+      snippet: JSON.stringify({
+        openapi_url: `${publicBase}/api/v1/openapi.json`,
+        tools_base: `${publicBase}/api/v1/tools`
+      }, null, 2)
+    };
+
+    MCP_CONFIGS['cursor'] = {
+      title: 'Cursor & Windsurf MCP Settings',
+      buttonLabel: 'Copy Cursor Config',
+      instruction: 'Add under <strong>Cursor Settings &gt; Features &gt; MCP</strong> as an SSE transport or Stdio command.',
+      snippet: JSON.stringify({
+        mcpServers: {
+          "y-master-editor": {
+            url: localSse
+          }
+        }
+      }, null, 2)
+    };
+
+    renderActiveMcpProvider();
   };
 
   const copyToClipboard = async (text, triggerBtn, originalText) => {
@@ -4051,10 +4097,40 @@ function bindEvents() {
     }
   };
 
+  const refreshMcpStatus = async () => {
+    if (window.electronAPI && typeof window.electronAPI.getMcpStatus === 'function') {
+      try {
+        const status = await window.electronAPI.getMcpStatus();
+        if (status) {
+          currentMcpState = { ...currentMcpState, ...status };
+          updateMcpConfigsFromState();
+        }
+      } catch (err) {
+        console.warn('Failed to query MCP status:', err);
+      }
+    }
+  };
+
+  if (window.electronAPI && typeof window.electronAPI.onMcpTunnelStatus === 'function') {
+    window.electronAPI.onMcpTunnelStatus((statusData) => {
+      if (statusData) {
+        if (statusData.publicUrl) {
+          currentMcpState.publicUrl = statusData.publicUrl;
+          currentMcpState.publicSseUrl = `${statusData.publicUrl}/sse`;
+          currentMcpState.publicMcpUrl = `${statusData.publicUrl}/mcp`;
+        }
+        if (statusData.status) currentMcpState.tunnelStatus = statusData.status;
+        if (statusData.localPort) currentMcpState.localPort = statusData.localPort;
+        updateMcpConfigsFromState();
+      }
+    });
+  }
+
   const openMcpModal = () => {
     if (mcpModal) mcpModal.classList.add('active');
     if (mcpBackdrop) mcpBackdrop.classList.add('active');
-    renderActiveMcpProvider();
+    refreshMcpStatus();
+    updateMcpConfigsFromState();
   };
 
   const closeMcpModal = () => {
@@ -4084,20 +4160,38 @@ function bindEvents() {
     btnCopyMcpConfig.addEventListener('click', () => {
       const data = MCP_CONFIGS[activeMcpProvider];
       if (data) {
-        copyToClipboard(data.snippet, btnCopyLabel, data.buttonLabel);
+        // If Claude custom, copy just the URL for easy paste into Claude's URL field!
+        if (activeMcpProvider === 'claude-custom') {
+          const urlToCopy = currentMcpState.publicSseUrl || data.snippet;
+          copyToClipboard(urlToCopy, btnCopyLabel, data.buttonLabel);
+        } else if (activeMcpProvider === 'gemini') {
+          const urlToCopy = currentMcpState.publicMcpUrl || data.snippet;
+          copyToClipboard(urlToCopy, btnCopyLabel, data.buttonLabel);
+        } else {
+          copyToClipboard(data.snippet, btnCopyLabel, data.buttonLabel);
+        }
       }
+    });
+  }
+
+  if (btnCopyClaudeUrl) {
+    btnCopyClaudeUrl.addEventListener('click', () => {
+      const targetUrl = currentMcpState.publicSseUrl || `http://127.0.0.1:${currentMcpState.localPort}/sse`;
+      copyToClipboard(targetUrl, btnCopyClaudeUrl, 'Copy Claude URL');
     });
   }
 
   if (btnCopyGeminiUrl) {
     btnCopyGeminiUrl.addEventListener('click', () => {
-      copyToClipboard('https://preserve-gilbert-lyrics-simple.trycloudflare.com/mcp', btnCopyGeminiUrl, 'Copy HTTPS URL');
+      const targetUrl = currentMcpState.publicMcpUrl || `http://127.0.0.1:${currentMcpState.localPort}/mcp`;
+      copyToClipboard(targetUrl, btnCopyGeminiUrl, 'Copy Gemini URL');
     });
   }
 
-  if (btnCopyUrl) {
-    btnCopyUrl.addEventListener('click', () => {
-      copyToClipboard('http://127.0.0.1:48721/mcp', btnCopyUrl, 'Copy URL');
+  if (btnCopyLocalSse) {
+    btnCopyLocalSse.addEventListener('click', () => {
+      const targetUrl = currentMcpState.localSseUrl || `http://127.0.0.1:${currentMcpState.localPort}/sse`;
+      copyToClipboard(targetUrl, btnCopyLocalSse, 'Copy Local SSE');
     });
   }
 
@@ -4107,8 +4201,25 @@ function bindEvents() {
     });
   }
 
-  // Initialize MCP modal snippet
-  renderActiveMcpProvider();
+  if (btnRestartTunnel) {
+    btnRestartTunnel.addEventListener('click', async () => {
+      btnRestartTunnel.textContent = '⏳';
+      if (mcpTunnelStatusText) mcpTunnelStatusText.textContent = 'Public Tunnel: Restarting...';
+      if (window.electronAPI && typeof window.electronAPI.restartMcpTunnel === 'function') {
+        try {
+          await window.electronAPI.restartMcpTunnel();
+        } catch (_) {}
+      }
+      setTimeout(() => {
+        btnRestartTunnel.textContent = '🔄';
+        refreshMcpStatus();
+      }, 3000);
+    });
+  }
+
+  // Initial load of MCP configurations and status
+  updateMcpConfigsFromState();
+  refreshMcpStatus();
 
   // --- Omni-Auth, Nicknames & Telemetry Event Listeners ---
   if (btnOpenAuthModal) {

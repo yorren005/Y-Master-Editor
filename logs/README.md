@@ -18,6 +18,8 @@ This directory contains native markdown log files tracking the CI/CD pipeline, a
    - Verification of public Cloudflare HTTPS tunnel, Streamable HTTP SSE handshake, and discovery of all 9 document tools.
 6. **[Google Gemini MCP UI Integration & Test Verification](./mcp-ui-gemini-integration-test.md)**
    - Verification of frontend modal updates, default Gemini tab, quick-copy HTTPS row, and 100% pass across all 5 test suites.
+7. **[Claude Custom Connector & Desktop MCP Architecture Research & Fix](./claude-custom-connector-research-and-fix.md)**
+   - Complete root cause flaw analysis, industry research on Claude custom connectors and SSE transports, self-healing TunnelManager, and 100% verification across all 6 test suites.
 
 ---
 

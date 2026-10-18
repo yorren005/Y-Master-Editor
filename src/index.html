@@ -394,21 +394,25 @@
       </p>
 
       <!-- Live Transports Status Bar -->
-      <div class="mcp-status-bar">
-        <div class="mcp-status-pill">
+      <div class="mcp-status-bar" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <div class="mcp-status-pill" id="mcp-gateway-status-pill">
           <span class="mcp-status-dot-active"></span>
-          <span>Dual Transport Active: Streamable HTTP (Port 48721) &amp; Stdio</span>
+          <span id="mcp-gateway-status-text">MCP Gateway: Port 48721 (SSE &amp; Streamable HTTP)</span>
         </div>
-        <span style="font-size: 10px; color: var(--color-autumn); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Zero Install</span>
+        <div class="mcp-status-pill" id="mcp-tunnel-status-pill" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3);">
+          <span class="mcp-status-dot-active" id="mcp-tunnel-dot"></span>
+          <span id="mcp-tunnel-status-text" style="color: #10b981; font-weight: 600;">Public Tunnel: Connecting...</span>
+          <button id="btn-restart-tunnel" style="background: transparent; border: none; color: var(--color-sand); cursor: pointer; padding: 0 4px; font-size: 11px;" title="Refresh Public HTTPS Tunnel">🔄</button>
+        </div>
       </div>
 
       <!-- Provider Tabs Selector -->
       <div class="mcp-tabs-nav" id="mcp-tabs-nav">
-        <button class="mcp-tab-btn active" data-provider="gemini">Google Gemini</button>
-        <button class="mcp-tab-btn" data-provider="claude">Anthropic (Claude)</button>
+        <button class="mcp-tab-btn active" data-provider="claude-custom">Claude Custom Connector</button>
+        <button class="mcp-tab-btn" data-provider="claude-desktop">Claude Desktop (Local)</button>
+        <button class="mcp-tab-btn" data-provider="gemini">Google Gemini</button>
         <button class="mcp-tab-btn" data-provider="openai">OpenAI (ChatGPT)</button>
-        <button class="mcp-tab-btn" data-provider="cursor">Cursor</button>
-        <button class="mcp-tab-btn" data-provider="vscode">VS Code / Windsurf</button>
+        <button class="mcp-tab-btn" data-provider="cursor">Cursor &amp; Windsurf</button>
       </div>
 
       <!-- Dynamic Code Snippet Box -->
@@ -416,11 +420,11 @@
         <div class="code-block-header">
           <div class="code-block-tab">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-            <span id="mcp-config-tab-title">Google Gemini Connected Apps</span>
+            <span id="mcp-config-tab-title">Claude Custom Connector (claude.ai / Remote)</span>
           </div>
           <button id="btn-copy-mcp-config" class="btn-copy-pill" title="Copy configuration to clipboard">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            <span id="btn-copy-label">Copy HTTPS URL</span>
+            <span id="btn-copy-label">Copy Claude URL</span>
           </button>
         </div>
         <pre id="mcp-config-snippet" class="mcp-code-block"></pre>
@@ -428,20 +432,25 @@
 
       <!-- Quick Step Instruction -->
       <div id="mcp-provider-instruction" class="mcp-provider-instruction">
-        In <strong>Gemini &gt; Settings &gt; Connected Apps &gt; Add MCP Server</strong>, enter Server Name: <code>Y-Master-Editor</code> and paste the public HTTPS URL below.
+        In <strong>Claude.ai &gt; Settings &gt; Connectors &gt; Add custom connector</strong>, enter Name: <code>Y-Master-Editor</code>, paste the live URL below, and select <strong>"No sign in"</strong> under Authentication.
       </div>
 
       <!-- Direct Quick-Copy Endpoints Strip -->
       <div class="mcp-quick-endpoints">
+        <div class="mcp-endpoint-row" style="background: rgba(234, 88, 12, 0.08); border-color: rgba(234, 88, 12, 0.3);">
+          <span class="mcp-endpoint-type" style="color: #ea580c; font-weight: 700;">Claude Custom Connector (HTTPS SSE):</span>
+          <code class="mcp-endpoint-code" id="mcp-claude-url-code" style="color: #fb923c;">Initializing public tunnel...</code>
+          <button id="btn-copy-claude-url" class="btn-endpoint-copy" style="background: #ea580c; color: #fff; font-weight: 600;" title="Copy Claude SSE Endpoint">Copy Claude URL</button>
+        </div>
         <div class="mcp-endpoint-row" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3);">
           <span class="mcp-endpoint-type" style="color: #10b981; font-weight: 700;">Google Gemini (Public HTTPS):</span>
-          <code class="mcp-endpoint-code" id="mcp-gemini-url-code" style="color: #34d399;">https://preserve-gilbert-lyrics-simple.trycloudflare.com/mcp</code>
-          <button id="btn-copy-gemini-url" class="btn-endpoint-copy" style="background: #10b981; color: #fff; font-weight: 600;" title="Copy Gemini HTTPS Endpoint">Copy HTTPS URL</button>
+          <code class="mcp-endpoint-code" id="mcp-gemini-url-code" style="color: #34d399;">Initializing public tunnel...</code>
+          <button id="btn-copy-gemini-url" class="btn-endpoint-copy" style="background: #10b981; color: #fff; font-weight: 600;" title="Copy Gemini HTTPS Endpoint">Copy Gemini URL</button>
         </div>
         <div class="mcp-endpoint-row">
-          <span class="mcp-endpoint-type">Streamable HTTP / SSE:</span>
-          <code class="mcp-endpoint-code" id="mcp-url-code">http://127.0.0.1:48721/mcp</code>
-          <button id="btn-copy-url" class="btn-endpoint-copy" title="Copy HTTP Endpoint">Copy URL</button>
+          <span class="mcp-endpoint-type">Claude Desktop (Local SSE):</span>
+          <code class="mcp-endpoint-code" id="mcp-local-sse-code">http://127.0.0.1:48721/sse</code>
+          <button id="btn-copy-local-sse" class="btn-endpoint-copy" title="Copy Local SSE Endpoint">Copy Local SSE</button>
         </div>
         <div class="mcp-endpoint-row">
           <span class="mcp-endpoint-type">Stdio Command:</span>
