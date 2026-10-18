@@ -1,7 +1,7 @@
 {
   "name": "y-master-editor",
   "productName": "Y Master Editor",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "Y Master Editor — Precision Vector PDF & Presentation Studio with MCP Agent Integration",
   "main": "electron/main.cjs",
   "scripts": {
