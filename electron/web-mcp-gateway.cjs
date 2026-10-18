@@ -573,7 +573,8 @@ class WebMcpGateway {
 
         // Persist discovery port file for tools and scripts
         try {
-          const portFilePath = path.join(__dirname, '..', '.mcp-port.json');
+          const { resolveWritablePath } = require('./storage-paths.cjs');
+          const portFilePath = resolveWritablePath('.mcp-port.json');
           fs.writeFileSync(portFilePath, JSON.stringify({
             port: this.actualPort,
             sseUrl: `http://127.0.0.1:${this.actualPort}/sse`,
@@ -616,8 +617,8 @@ module.exports = {
 
 // Standalone execution support
 if (require.main === module) {
-  const { TransactionManager } = require('../src/engine/transaction-manager.cjs');
-  const mcpStatePath = path.join(__dirname, '..', 'document_state.json');
+  const { ensureSeededFile } = require('./storage-paths.cjs');
+  const mcpStatePath = ensureSeededFile('document_state.json');
   const tm = new TransactionManager(mcpStatePath);
   const port = parseInt(process.env.MCP_PORT || '48721', 10);
   const gateway = new WebMcpGateway({

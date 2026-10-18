@@ -30,8 +30,10 @@ const { registerDocumentTools } = require('../src/engine/mcp-tools.cjs');
 
 const fs = require('fs');
 
-const STATE_FILE = path.join(__dirname, '..', 'document_state.json');
-const PORT_FILE = path.join(__dirname, '..', '.mcp-port.json');
+const { ensureSeededFile, resolveWritablePath } = require('./storage-paths.cjs');
+
+const STATE_FILE = ensureSeededFile('document_state.json');
+const PORT_FILE = resolveWritablePath('.mcp-port.json');
 
 // 2. Initialize Core Engine & Transaction Manager
 const transactionManager = new TransactionManager(STATE_FILE);

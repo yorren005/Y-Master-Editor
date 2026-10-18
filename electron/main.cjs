@@ -3,6 +3,17 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const WebSocket = require('ws');
+
+// Initialize isolated UserData path immediately to prevent Chromium process_singleton lock collisions
+const { initializeUserData, resolveWritablePath, ensureSeededFile } = require('./storage-paths.cjs');
+initializeUserData();
+
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+  process.exit(0);
+}
+
 const firebaseService = require('./firebase-service.cjs');
 const { setupDesktopAutoUpdater } = require('./auto-updater.cjs');
 
@@ -185,7 +196,7 @@ process.on('uncaughtException', (err) => {
   console.warn('[Handled Main Process Notice]:', err && err.message ? err.message : err);
 });
 
-const mcpStatePath = path.join(__dirname, '..', 'document_state.json');
+const mcpStatePath = ensureSeededFile('document_state.json');
 let mainTransactionManager = null;
 try {
   const { TransactionManager } = require('../src/engine/transaction-manager.cjs');
@@ -315,7 +326,7 @@ ipcMain.handle('mcp:get-tunnel-config', async () => {
 });
 
 ipcMain.handle('mcp:save-tunnel-config', async (_event, { token, domain }) => {
-  const configPath = path.join(__dirname, '..', '.mcp-tunnel-config.json');
+  const configPath = resolveWritablePath('.mcp-tunnel-config.json');
   try {
     let currentToken = '';
     if (activeTunnel) {
@@ -678,7 +689,7 @@ ipcMain.handle('open-external', async (event, url) => {
 // Persistent Google User Accounts and Scoped Workspaces Store
 ipcMain.handle('save-user-data', async (event, data) => {
   try {
-    const userFile = path.join(__dirname, '../user_accounts.json');
+    const userFile = resolveWritablePath('user_accounts.json');
     await fs.promises.writeFile(userFile, JSON.stringify(data, null, 2), 'utf-8');
     return { success: true };
   } catch (err) {
@@ -688,7 +699,7 @@ ipcMain.handle('save-user-data', async (event, data) => {
 
 ipcMain.handle('load-user-data', async () => {
   try {
-    const userFile = path.join(__dirname, '../user_accounts.json');
+    const userFile = ensureSeededFile('user_accounts.json', '{}');
     if (fs.existsSync(userFile)) {
       const content = await fs.promises.readFile(userFile, 'utf-8');
       return JSON.parse(content);
@@ -851,23 +862,7 @@ ipcMain.handle('relaunch-app', () => {
   app.exit(0);
 });
 
-// Set isolated UserData path to prevent Chromium process_singleton lock collisions (error code 32)
-try {
-  const customUserData = path.join(app.getPath('appData'), 'Y-Master-Editor-Studio');
-  if (!fs.existsSync(customUserData)) {
-    fs.mkdirSync(customUserData, { recursive: true });
-  }
-  app.setPath('userData', customUserData);
-} catch (e) {
-  console.warn('[UserData Path Notice]:', e.message);
-}
-
-const gotTheLock = app.requestSingleInstanceLock();
-
-if (!gotTheLock) {
-  app.quit();
-} else {
-  app.on('second-instance', () => {
+app.on('second-instance', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.show();

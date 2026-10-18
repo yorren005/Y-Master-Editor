@@ -40,12 +40,11 @@ let db = null;
 let currentFirebaseUser = null;
 let hasLiveCloudCredentials = false;
 
-// Determine storage path for local Firestore & Telemetry caches
-const userStorageDir = path.join(__dirname, '../data/firestore');
-const trackingStorageDir = path.join(__dirname, '../data/tracking');
-[userStorageDir, trackingStorageDir].forEach(dir => {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-});
+const { resolveWritablePath } = require('./storage-paths.cjs');
+
+// Determine storage path for local Firestore & Telemetry caches (guaranteed writable outside app.asar)
+const userStorageDir = resolveWritablePath('data', 'firestore');
+const trackingStorageDir = resolveWritablePath('data', 'tracking');
 
 // Load Firebase configuration
 function loadFirebaseConfig() {

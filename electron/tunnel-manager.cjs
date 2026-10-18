@@ -11,19 +11,20 @@ const fs = require('fs');
 const http = require('http');
 const https = require('https');
 const { EventEmitter } = require('events');
+const { resolveWritablePath, getCloudflaredPath } = require('./storage-paths.cjs');
 
 class TunnelManager extends EventEmitter {
   constructor(options = {}) {
     super();
     this.localPort = options.localPort || 48721;
-    this.binPath = options.binPath || path.join(__dirname, '..', 'bin', 'cloudflared.exe');
+    this.binPath = options.binPath || getCloudflaredPath();
     this.tunnelProcess = null;
     this.publicUrl = null;
     this.status = 'stopped'; // 'stopped' | 'starting' | 'online' | 'reconnecting'
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 20;
     this.healthCheckTimer = null;
-    this.tunnelFilePath = path.join(__dirname, '..', '.mcp-tunnel.json');
+    this.tunnelFilePath = resolveWritablePath('.mcp-tunnel.json');
     this.isStopping = false;
   }
 
@@ -32,7 +33,7 @@ class TunnelManager extends EventEmitter {
    * @returns {{ token: string|null, domain: string|null }}
    */
   loadNamedTunnelConfig() {
-    const configPath = path.join(__dirname, '..', '.mcp-tunnel-config.json');
+    const configPath = resolveWritablePath('.mcp-tunnel-config.json');
     let token = process.env.MCP_CLOUDFLARE_TOKEN || process.env.CLOUDFLARE_TUNNEL_TOKEN || null;
     let domain = process.env.MCP_CUSTOM_DOMAIN || null;
 
